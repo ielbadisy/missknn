@@ -1,0 +1,28 @@
+Package: missknn
+Type: Package
+Title: Fast Masked K-Nearest Neighbor Imputation
+Version: 1.0.0
+Authors@R: person("Imad", "El Badisy", email = "imad@example.com", role = c("aut", "cre"))
+Description: Fast masked KNN imputation for tabular data with support for single and multiple imputation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: false
+Imports:
+    data.table,
+    Rcpp,
+    stats,
+    utils
+LinkingTo:
+    Rcpp
+Suggests:
+    bench,
+    ggplot2,
+    knitr,
+    mimar,
+    missForest,
+    missMDA,
+    testthat (>= 3.0.0),
+    VIM,
+    roxygen2
+Config/testthat/edition: 3
+RoxygenNote: 7.3.3
