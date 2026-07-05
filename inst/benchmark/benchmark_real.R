@@ -4,8 +4,6 @@ suppressPackageStartupMessages({
   library(knitr)
   library(mimar)
   library(missForest)
-  library(missMDA)
-  library(VIM)
   library(biostatlab)
   library(missknn)
 })
@@ -28,12 +26,7 @@ run_dataset <- function(name, truth, factor_cols = character(0), prop = 0.2, see
   miss <- as.data.frame(amp$data)
   for (fc in factor_cols) miss[[fc]] <- factor(miss[[fc]], levels = levels(truth[[fc]]))
 
-  numeric_only <- miss[, numeric_cols, drop = FALSE]
-
   t_kn <- system.time(kn <- missknn::complete(missknn(miss, k = 5L, m = 1L, seed = 1L)))[["elapsed"]]
-  t_mda <- system.time(
-    mda_num <- suppressWarnings(as.data.frame(missMDA::imputePCA(numeric_only, ncp = min(5, ncol(numeric_only) - 1))$completeObs))
-  )[["elapsed"]]
   # missForest's internal OOB error accounting for classification targets can
   # fail outright ("subscript out of bounds") if a rare factor level happens
   # to be entirely masked by MCAR sampling -- a real brittleness of its
@@ -49,25 +42,18 @@ run_dataset <- function(name, truth, factor_cols = character(0), prop = 0.2, see
     }
   )
   t_rf <- rf_res[["elapsed"]]
-  t_vim <- system.time(
-    vim_num <- suppressWarnings(as.data.frame(VIM::kNN(numeric_only, k = 5L, imp_var = FALSE)))
-  )[["elapsed"]]
 
   data.frame(
     dataset = name,
-    method = c("missknn", "missMDA", "missForest", "VIM::kNN"),
-    runtime_sec = c(t_kn, t_mda, t_rf, t_vim),
+    method = c("missknn", "missForest"),
+    runtime_sec = c(t_kn, t_rf),
     numeric_mse = c(
       col_mse(truth, kn, numeric_cols),
-      col_mse(truth, mda_num, numeric_cols),
-      if (is.null(rf)) NA_real_ else col_mse(truth, rf, numeric_cols),
-      col_mse(truth, vim_num, numeric_cols)
+      if (is.null(rf)) NA_real_ else col_mse(truth, rf, numeric_cols)
     ),
     factor_accuracy = c(
       col_acc(truth, kn, factor_cols),
-      NA_real_,
-      if (is.null(rf)) NA_real_ else col_acc(truth, rf, factor_cols),
-      NA_real_
+      if (is.null(rf)) NA_real_ else col_acc(truth, rf, factor_cols)
     )
   )
 }
@@ -137,8 +123,7 @@ report <- c(
   "",
   "Five real biomedical/clinical datasets (from the `biostatlab` package) with",
   "20% MCAR imposed column-wise on complete-case ground truth, comparing",
-  "`missknn`, `missMDA::imputePCA` (numeric columns only), `missForest`, and",
-  "`VIM::kNN` (numeric columns only):",
+  "`missknn` and `missForest`:",
   "",
   "- **pbc** (n = 276): Mayo Clinic primary biliary cirrhosis trial data, all",
   "  numeric/integer-coded.",
@@ -148,11 +133,8 @@ report <- c(
   "  numeric/integer-coded.",
   "- **metabric_clinical** (n complete cases, p = 11): breast cancer clinical",
   "  variables from the METABRIC cohort, mixing 6 numeric and 5 categorical",
-  "  (factor) variables -- `missMDA::imputePCA` and `VIM::kNN` are only",
-  "  applied to the numeric subset here since they do not support factors",
-  "  directly (`missMDA` needs the separate `imputeFAMD` routine for mixed",
-  "  data); `missknn` and `missForest` impute numeric and categorical targets",
-  "  from the same call.",
+  "  (factor) variables; `missknn` and `missForest` impute numeric and",
+  "  categorical targets from the same call.",
   "- **crc_mondaca2020** (n complete cases, p = 11): metastatic colorectal",
   "  cancer clinical/genomics cohort (Mondaca et al. 2020), mixing 6 numeric",
   "  (including tumor mutational burden and MSI score) and 5 categorical",
