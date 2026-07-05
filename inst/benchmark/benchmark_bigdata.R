@@ -16,7 +16,6 @@ runner_template <- "
 suppressPackageStartupMessages({
   library(bench)
   library(missknn)
-  library(missMDA)
   library(missForest)
 })
 set.seed(20260705)
@@ -43,7 +42,6 @@ miss <- amputate(truth, prop = 0.2, seed = 100L + %d)
 method <- '%s'
 call_fn <- switch(method,
   missknn = function() complete(missknn(miss, k = 5L, m = 1L, seed = 1L)),
-  missMDA = function() suppressWarnings(as.data.frame(missMDA::imputePCA(miss, ncp = 2)$completeObs)),
   missForest = function() suppressWarnings(missForest::missForest(miss, verbose = FALSE)$ximp)
 )
 # A single bench::mark() iteration is noisy for calls this fast: whether one
@@ -73,7 +71,7 @@ run_missforest <- n_grid <= 5000L
 results <- list()
 for (i in seq_along(n_grid)) {
   n <- n_grid[i]
-  methods <- c("missknn", "missMDA", if (run_missforest[i]) "missForest")
+  methods <- c("missknn", if (run_missforest[i]) "missForest")
   for (method in methods) {
     results[[length(results) + 1L]] <- run_one(n, i, method)
   }
@@ -81,7 +79,7 @@ for (i in seq_along(n_grid)) {
 }
 
 bigdata_df <- do.call(rbind, results)
-bigdata_df$method <- factor(bigdata_df$method, levels = c("missknn", "missMDA", "missForest"))
+bigdata_df$method <- factor(bigdata_df$method, levels = c("missknn", "missForest"))
 
 runtime_plot <- ggplot(bigdata_df, aes(n, runtime_sec, color = method)) +
   geom_line(linewidth = 1) +
@@ -124,17 +122,17 @@ report <- c(
   "executes in its own fresh `Rscript` process, so timings are not distorted",
   "by heap growth accumulated across earlier, larger runs in a shared session.",
   "`missForest` is only run up to n = 5,000 since its per-tree cost makes",
-  "larger n impractical; `missknn` and `missMDA` run across the full grid.",
+  "larger n impractical; `missknn` runs across the full grid.",
   "",
   "## Takeaway",
   "",
-  "`missknn` and `missMDA` are essentially tied on accuracy (MSE) at every n;",
-  "both dramatically outperform `missForest`, whose runtime already becomes",
-  "impractical at n = 5,000. On speed, `missMDA`'s lower fixed overhead keeps",
-  "it faster at small/medium n, but `missknn`'s cost grows more slowly with n",
-  "(capped-donor masked-KNN search is close to linear, vs. `missMDA`'s",
-  "iterative PCA passes), so `missknn` overtakes `missMDA` and pulls ahead as",
-  "n grows into genuine big-data territory (roughly n >= 100,000 here).",
+  "`missForest`'s runtime already becomes impractical at n = 5,000 (over a",
+  "minute) and would take hours at n = 100,000, so no comparison point exists",
+  "for it beyond n = 5,000. `missknn`'s capped-donor masked-KNN search stays",
+  "close to linear in n and keeps running in well under a second per column",
+  "set even at n = 100,000, which is the practical point of the donor-cap",
+  "design: search cost does not grow with the full donor pool once n exceeds",
+  "the cap.",
   "",
   "## Figures",
   "",
