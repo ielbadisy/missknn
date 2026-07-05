@@ -30,10 +30,11 @@
 #'   always uses every donor.
 #' @param max_iter Number of single-pass refinement iterations.
 #' @param parallel_cores Number of cores used when `m > 1`. Defaults to the
-#'   available cores minus one.
+#'   available cores minus one, capped at 2 under `R CMD check`-style
+#'   environments that set `_R_CHECK_LIMIT_CORES_`.
 #'
 #' @details
-#' Let `X = (x_{ij})` be an `n x p` data matrix and let `R_{ij}` be the
+#' Let \eqn{X = (x_{ij})} be an \eqn{n \times p} data matrix and let \eqn{R_{ij}} be the
 #' missingness indicator:
 #'
 #' \deqn{R_{ij} = 1 \; \text{if } x_{ij} \text{ is observed}, \qquad
@@ -75,7 +76,7 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                     numeric_estimator = c("regression", "mean"), ridge = 1e-4,
                     donor_cap = 2000L,
                     max_iter = 1L,
-                    parallel_cores = max(1L, parallel::detectCores() - 1L)) {
+                    parallel_cores = missknn_default_cores()) {
   weights <- match.arg(weights)
   numeric_estimator <- match.arg(numeric_estimator)
   dt <- missknn_validate_input(data)
