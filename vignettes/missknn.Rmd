@@ -1,0 +1,108 @@
+---
+title: "Getting started with missknn"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with missknn}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+`missknn` imputes missing values in tabular data with a masked k-nearest-neighbor engine:
+distances are computed only on jointly observed variables, the compute-heavy steps (distance,
+neighbor ranking, aggregation) run in C++, and each column's neighborhood size and estimator are
+chosen automatically from a small internal holdout evaluation rather than fixed globally.
+
+```{r setup}
+library(missknn)
+```
+
+## Single imputation
+
+```{r}
+set.seed(1)
+x <- data.frame(
+  a = c(1, 2, NA, 4, 5),
+  b = c(2, NA, 3, 4, 6),
+  g = factor(c("x", "x", "y", NA, "y"))
+)
+
+imp <- missknn(x, k = 2, m = 1)
+missknn::complete(imp)
+```
+
+`missknn()` detects numeric and categorical (factor/character/logical) columns automatically, and
+imputes both from the same masked-distance neighborhood: numeric targets get a distance-weighted
+mean or a local regression fit (whichever validates better for that column), categorical targets
+get a distance-weighted majority vote.
+
+### A note on `complete()`
+
+`complete()` is a common generic name — packages like `mimar` or `tidyr` may also define one. If
+another attached package's `complete()` shadows `missknn`'s, call it explicitly:
+
+```{r, eval = FALSE}
+missknn::complete(imp)
+```
+
+## Multiple imputation
+
+Setting `m > 1` draws `m` completed datasets by sampling (rather than averaging) from each
+receiver's nearest donors, using the same distance model throughout:
+
+```{r}
+imp_mi <- missknn(x, k = 2, m = 5, seed = 1)
+length(missknn::complete(imp_mi))
+```
+
+## Per-column adaptive tuning
+
+Rather than using one fixed `k` for every column, `missknn()` runs a small internal holdout
+evaluation per column to choose:
+
+- how many neighbors (`k`) to use,
+- whether a distance-weighted mean or a local weighted-regression fit predicts held-out values
+  better, and
+- whether the column has any locally exploitable signal at all -- if not, it is filled directly
+  from the global mean/mode, skipping neighbor search entirely for that column.
+
+This is inspected via the fitted object's `meta`:
+
+```{r}
+imp$meta$k_per_col
+imp$meta$estimator_per_col
+imp$meta$is_global_col
+```
+
+## Why this matters for larger data
+
+Naive KNN imputation searches every donor for every missing value: cost grows quadratically with
+the number of rows. `missknn` bounds the neighbor-search candidate pool with `donor_cap` (default
+2000), so cost stays close to linear in `n` even for large datasets, while the per-column global
+fast path above further skips neighbor search for columns where it wouldn't help anyway. See
+`vignette` companions in `inst/benchmark/` for runtime and accuracy comparisons against
+`missForest`, `missMDA`, and `VIM::kNN`, including a scaling study from n = 1,000 to n = 100,000.
+
+## Options at a glance
+
+```{r, eval = FALSE}
+missknn(
+  data,
+  k = 5L,                 # default neighbor count (tuned per column)
+  m = 1L,                 # 1 = single imputation, >1 = multiple imputation
+  scale = TRUE,            # standardize numeric variables before distances
+  weights = "distance",    # "distance" (inverse-distance) or "uniform"
+  numeric_estimator = "regression", # "regression" or "mean"
+  donor_cap = 2000L,       # cap on the neighbor-search candidate pool
+  add_indicator = FALSE,   # append missingness indicator columns
+  seed = NULL              # reproducible multiple imputation
+)
+```
