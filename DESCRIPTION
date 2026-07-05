@@ -20,9 +20,7 @@ Suggests:
     rmarkdown,
     mimar,
     missForest,
-    missMDA,
     testthat (>= 3.0.0),
-    VIM,
     roxygen2
 VignetteBuilder: knitr
 Config/testthat/edition: 3
