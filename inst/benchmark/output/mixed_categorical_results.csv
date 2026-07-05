@@ -1,0 +1,3 @@
+"method","numeric_mse","factor_accuracy"
+"missknn",0.158323844386732,0.97
+"missForest",0.154409263975221,0.9775
