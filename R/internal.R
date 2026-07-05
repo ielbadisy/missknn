@@ -1,3 +1,15 @@
+missknn_default_cores <- function() {
+  # CRAN policy caps examples/tests/vignettes at 2 cores; check-time runs set
+  # `_R_CHECK_LIMIT_CORES_`, in which case fall back to that limit instead of
+  # `detectCores() - 1`, which can otherwise try to spawn far more workers
+  # than the check environment allows.
+  limited <- Sys.getenv("_R_CHECK_LIMIT_CORES_", unset = NA)
+  if (!is.na(limited) && nzchar(limited)) {
+    return(2L)
+  }
+  max(1L, parallel::detectCores() - 1L)
+}
+
 missknn_validate_input <- function(data) {
   if (!is.data.frame(data) && !is.matrix(data)) {
     stop("`data` must be a data.frame or matrix.", call. = FALSE)
@@ -449,7 +461,7 @@ missknn_tune_all <- function(dt, meta) {
       next
     }
 
-    n_hold <- max(5L, min(200L, floor(0.25 * n_don)))
+    n_hold <- max(5L, min(100L, floor(0.25 * n_don)))
     hold_idx <- sample(donors, n_hold)
     train_idx <- setdiff(donors, hold_idx)
     if (length(train_idx) < 5L) {
