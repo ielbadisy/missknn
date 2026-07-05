@@ -89,7 +89,7 @@ the number of rows. `missknn` bounds the neighbor-search candidate pool with `do
 2000), so cost stays close to linear in `n` even for large datasets, while the per-column global
 fast path above further skips neighbor search for columns where it wouldn't help anyway. See
 `vignette` companions in `inst/benchmark/` for runtime and accuracy comparisons against
-`missForest`, `missMDA`, and `VIM::kNN`, including a scaling study from n = 1,000 to n = 100,000.
+`missForest`, including a scaling study from n = 1,000 to n = 100,000.
 
 ## Options at a glance
 
