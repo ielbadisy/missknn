@@ -449,7 +449,7 @@ missknn_tune_all <- function(dt, meta) {
       next
     }
 
-    n_hold <- max(5L, min(40L, floor(0.25 * n_don)))
+    n_hold <- max(5L, min(200L, floor(0.25 * n_don)))
     hold_idx <- sample(donors, n_hold)
     train_idx <- setdiff(donors, hold_idx)
     if (length(train_idx) < 5L) {
