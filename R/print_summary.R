@@ -1,4 +1,8 @@
 #' @rdname missknn
+#' @param x A `missknn` object (`print.missknn`) or a `summary.missknn` object
+#'   (`print.summary.missknn`).
+#' @param object A `missknn` object.
+#' @param ... Unused.
 #' @export
 print.missknn <- function(x, ...) {
   cat("<missknn>\n", sep = "")
