@@ -1,0 +1,10 @@
+*.o
+*.so
+*.dll
+src/*.o
+src/*.so
+src-i386/*.o
+src-x64/*.o
+.Rhistory
+.RData
+.Rproj.user
