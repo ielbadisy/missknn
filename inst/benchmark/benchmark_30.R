@@ -6,8 +6,6 @@ suppressPackageStartupMessages({
   library(knitr)
   library(mimar)
   library(missForest)
-  library(missMDA)
-  library(VIM)
   library(missknn)
 })
 
@@ -46,8 +44,6 @@ impute_methods <- function(df_miss, seed) {
   timings <- bench::mark(
     missknn = complete(missknn(x_miss, k = 5L, m = 1L, seed = seed)),
     missForest = suppressWarnings(missForest::missForest(x_miss, verbose = FALSE)$ximp),
-    missMDA = suppressWarnings(missMDA::imputePCA(x_miss, ncp = 2)$completeObs),
-    `VIM::kNN` = suppressWarnings(VIM::kNN(x_miss, k = 5L, imp_var = FALSE)),
     iterations = 1,
     check = FALSE
   )
@@ -55,9 +51,7 @@ impute_methods <- function(df_miss, seed) {
   list(
     timings = timings,
     missknn = data.frame(y = df_miss$y, complete(missknn(x_miss, k = 5L, m = 1L, seed = seed)), check.names = FALSE),
-    missForest = data.frame(y = df_miss$y, suppressWarnings(missForest::missForest(x_miss, verbose = FALSE)$ximp), check.names = FALSE),
-    missMDA = data.frame(y = df_miss$y, suppressWarnings(missMDA::imputePCA(x_miss, ncp = 2)$completeObs), check.names = FALSE),
-    vim = data.frame(y = df_miss$y, suppressWarnings(VIM::kNN(x_miss, k = 5L, imp_var = FALSE)), check.names = FALSE)
+    missForest = data.frame(y = df_miss$y, suppressWarnings(missForest::missForest(x_miss, verbose = FALSE)$ximp), check.names = FALSE)
   )
 }
 
@@ -83,17 +77,15 @@ for (s in seq_len(30L)) {
 
   imp <- impute_methods(amp$complete, seed = s)
   timing_tbl <- as.data.frame(imp$timings)
-  timing_tbl$method <- c("missknn", "missForest", "missMDA", "VIM::kNN")
+  timing_tbl$method <- c("missknn", "missForest")
   timing_tbl$simulation <- s
   runtime_results[[s]] <- timing_tbl[, c("simulation", "method", "median", "mem_alloc")]
 
-  for (method in c("missknn", "missForest", "missMDA", "VIM::kNN")) {
+  for (method in c("missknn", "missForest")) {
     completed <- switch(
       method,
       missknn = imp$missknn,
-      missForest = imp$missForest,
-      missMDA = imp$missMDA,
-      `VIM::kNN` = imp$vim
+      missForest = imp$missForest
     )
     beta_hat <- fit_lm(completed)
     sc <- score_methods(full_beta, beta_hat)
@@ -105,10 +97,10 @@ for (s in seq_len(30L)) {
 
 runtime_df <- do.call(rbind, runtime_results)
 runtime_df$runtime_sec <- as.numeric(runtime_df$median)
-runtime_df$method <- factor(runtime_df$method, levels = c("missknn", "missForest", "missMDA", "VIM::kNN"))
+runtime_df$method <- factor(runtime_df$method, levels = c("missknn", "missForest"))
 
 coef_df <- do.call(rbind, coef_results)
-coef_df$method <- factor(coef_df$method, levels = c("missknn", "missForest", "missMDA", "VIM::kNN"))
+coef_df$method <- factor(coef_df$method, levels = c("missknn", "missForest"))
 
 runtime_summary <- aggregate(runtime_sec ~ method, runtime_df, mean)
 runtime_summary$sd_runtime <- aggregate(runtime_sec ~ method, runtime_df, sd)$runtime_sec
