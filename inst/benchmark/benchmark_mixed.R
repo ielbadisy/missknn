@@ -3,7 +3,6 @@ set.seed(20260705)
 suppressPackageStartupMessages({
   library(knitr)
   library(missForest)
-  library(missMDA)
   library(mimar)
   library(missknn)
 })
@@ -16,10 +15,9 @@ col_mse <- function(truth, imp, cols) {
 }
 
 ## ---- Study 1: correlated numeric data -------------------------------------
-## missMDA::imputePCA is near-optimal on exactly this DGP (low-rank Gaussian
-## with a single equicorrelation structure), so it is expected to win here;
-## the point is to check missknn stays competitive with, and beats
-## missForest, rather than to force a win it has no statistical claim to.
+## Checks whether missknn's local-regression / global-fallback tuning stays
+## competitive with missForest once predictors carry genuine linear
+## correlation, rather than only on the independent-noise case.
 simulate_correlated <- function(n = 300, p = 6, rho = 0.6) {
   Sigma <- matrix(rho, p, p)
   diag(Sigma) <- 1
@@ -34,22 +32,19 @@ amp_cor <- mimar::ampute(truth_cor, prop = 0.2, mechanism = "MCAR", target = nam
 miss_cor <- as.data.frame(amp_cor$data)
 
 kn_cor <- missknn::complete(missknn(miss_cor, k = 5L, m = 1L, seed = 1L))
-mda_cor <- suppressWarnings(as.data.frame(missMDA::imputePCA(miss_cor, ncp = 2)$completeObs))
 rf_cor <- suppressWarnings(missForest::missForest(miss_cor, verbose = FALSE)$ximp)
 
 correlated_results <- data.frame(
-  method = c("missknn", "missMDA", "missForest"),
+  method = c("missknn", "missForest"),
   mse = c(
     col_mse(truth_cor, kn_cor, names(truth_cor)),
-    col_mse(truth_cor, mda_cor, names(truth_cor)),
     col_mse(truth_cor, rf_cor, names(truth_cor))
   )
 )
 
 ## ---- Study 2: mixed numeric + categorical data ----------------------------
-## missMDA::imputePCA cannot handle a factor column at all (it requires the
-## separate imputeFAMD() routine for mixed data); missknn and missForest
-## handle numeric and categorical targets from the same call.
+## missknn and missForest both handle numeric and categorical targets from
+## the same call.
 n <- 400
 x1 <- rnorm(n)
 x2 <- 0.7 * x1 + rnorm(n, sd = 0.7)
@@ -85,17 +80,15 @@ report <- c(
   "## Study 1: correlated numeric data",
   "",
   "n = 300, p = 6 numeric variables drawn from an equicorrelated Gaussian",
-  "(rho = 0.6), 20% MCAR per column. `missMDA::imputePCA` is expected to win",
-  "here since the DGP matches its low-rank Gaussian assumption exactly.",
+  "(rho = 0.6), 20% MCAR per column.",
   "",
   knitr::kable(transform(correlated_results, mse = round(mse, 5)), format = "markdown"),
   "",
   "## Study 2: mixed numeric + categorical data",
   "",
   "n = 400, 3 correlated numeric variables plus 1 binary factor driven by one",
-  "of them, 20% MCAR per column. `missMDA::imputePCA` cannot impute the factor",
-  "column at all (it needs `imputeFAMD` for mixed data); `missknn` and",
-  "`missForest` handle numeric and categorical targets from the same call.",
+  "of them, 20% MCAR per column. `missknn` and `missForest` handle numeric and",
+  "categorical targets from the same call.",
   "",
   knitr::kable(
     transform(mixed_results, numeric_mse = round(numeric_mse, 5), factor_accuracy = round(factor_accuracy, 4)),
