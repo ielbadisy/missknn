@@ -3,21 +3,18 @@
 ## Study 1: correlated numeric data
 
 n = 300, p = 6 numeric variables drawn from an equicorrelated Gaussian
-(rho = 0.6), 20% MCAR per column. `missMDA::imputePCA` is expected to win
-here since the DGP matches its low-rank Gaussian assumption exactly.
+(rho = 0.6), 20% MCAR per column.
 
 |method     |     mse|
 |:----------|-------:|
 |missknn    | 0.12024|
-|missMDA    | 0.10122|
 |missForest | 0.11099|
 
 ## Study 2: mixed numeric + categorical data
 
 n = 400, 3 correlated numeric variables plus 1 binary factor driven by one
-of them, 20% MCAR per column. `missMDA::imputePCA` cannot impute the factor
-column at all (it needs `imputeFAMD` for mixed data); `missknn` and
-`missForest` handle numeric and categorical targets from the same call.
+of them, 20% MCAR per column. `missknn` and `missForest` handle numeric and
+categorical targets from the same call.
 
 |method     | numeric_mse| factor_accuracy|
 |:----------|-----------:|---------------:|
