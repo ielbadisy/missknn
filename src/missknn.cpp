@@ -13,7 +13,7 @@ using namespace Rcpp;
 // abandons the baseline. Guards against chance sampling noise in the
 // holdout evaluation from sending a no-signal column down the slower,
 // noisier local path for no real accuracy benefit.
-static const double kTuneMargin = 0.03;
+static const double kTuneMargin = 0.05;
 
 static inline double missknn_distance(
     int receiver,
