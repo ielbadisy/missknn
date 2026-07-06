@@ -15,6 +15,15 @@ using namespace Rcpp;
 // noisier local path for no real accuracy benefit.
 static const double kTuneMargin = 0.08;
 
+// Regression's chosen bandwidth is picked as the minimum holdout error over
+// several candidates (see cpp_missknn_tune_numeric); taking a minimum over
+// multiple noisy candidates is itself biased low relative to any single
+// candidate's true error (the same effect that makes "best of several dice
+// rolls" beat a fair average even when the die is unweighted), so accepting
+// regression needs a stricter margin than a single-candidate comparison
+// (like the plain weighted-mean k search) does.
+static const double kRegressionMargin = 0.20;
+
 static inline double missknn_distance(
     int receiver,
     int donor,
@@ -288,6 +297,22 @@ static bool missknn_local_regression(
   for (size_t j = 0; j < pred_pos.size(); ++j) {
     pred += beta[j + 1] * numeric_scaled(receiver_row - 1, pred_pos[j]);
   }
+
+  // A linear fit can extrapolate outside the observed donor range in a way a
+  // tree-based model structurally cannot -- e.g. predicting a negative value
+  // for a variable (like a follow-up duration) that is never negative in the
+  // data. Clipping to the observed range of the donors actually used in this
+  // fit removes that failure mode without changing the estimate whenever the
+  // linear fit already falls inside the data's support, which is the common
+  // case.
+  double y_min = y[0], y_max = y[0];
+  for (int i = 1; i < used; ++i) {
+    if (y[i] < y_min) y_min = y[i];
+    if (y[i] > y_max) y_max = y[i];
+  }
+  if (pred < y_min) pred = y_min;
+  if (pred > y_max) pred = y_max;
+
   out_value = pred;
   return true;
 }
@@ -389,7 +414,7 @@ NumericVector cpp_missknn_impute_numeric_column(
     }
 
     if (stochastic) {
-      if (estimator == "regression" && resid_sd > 0.0) {
+      if ((estimator == "regression") && resid_sd > 0.0) {
         out[r] = point_estimate + R::rnorm(0.0, resid_sd);
       } else {
         double sum_w = 0.0;
@@ -642,11 +667,30 @@ List cpp_missknn_tune_numeric(
       }
     }
 
-    {
+    // Exactly two regression bandwidth candidates -- narrow (a small multiple
+    // of the winning mean-estimator k) and wide (capped well below the full
+    // donor pool, since the variance-reduction benefit of more donors
+    // saturates long before that and an unbounded wide fit has no O(1) fast
+    // path if a false positive sends every receiver through it). Kept to two
+    // candidates deliberately: picking the minimum error over several noisy
+    // candidates is itself biased low even under pure noise (the same effect
+    // that makes "best of several dice rolls" beat a fair average), so more
+    // candidates raises the false-positive rate before the margin check even
+    // runs; kRegressionMargin compensates for the bias these two still carry.
+    const double pre_reg_best_err = best_err;
+    int best_reg_k = -1;
+    double best_reg_err = R_PosInf;
+
+    const int reg_base_k = chosen_global ? (k_grid.size() ? k_grid[k_grid.size() - 1] : 30) : chosen_k;
+    const int reg_k_candidates[2] = {
+      std::max(4 * reg_base_k, 30),
+      std::min(n_train, 300)
+    };
+
+    for (size_t ci = 0; ci < 2; ++ci) {
+      const int reg_k = reg_k_candidates[ci];
       double sse = 0.0;
       int cnt = 0;
-      const int reg_base_k = chosen_global ? (k_grid.size() ? k_grid[k_grid.size() - 1] : 30) : chosen_k;
-      const int reg_k = std::max(4 * reg_base_k, 30);
       for (int h = 0; h < n_hold; ++h) {
         if (NumericVector::is_na(truth[h])) continue;
         const int use_k = std::min(reg_k, static_cast<int>(ranked[h].size()));
@@ -663,11 +707,19 @@ List cpp_missknn_tune_numeric(
         sse += e * e;
         ++cnt;
       }
-      if (cnt > 0 && (sse / cnt) < best_err * (1.0 - kTuneMargin)) {
-        chosen_est = "regression";
-        chosen_k = reg_base_k;
-        chosen_global = false;
+      if (cnt == 0) continue;
+      const double mse = sse / cnt;
+      if (mse < best_reg_err) {
+        best_reg_err = mse;
+        best_reg_k = reg_k;
       }
+    }
+
+    if (best_reg_k > 0 && best_reg_err < pre_reg_best_err * (1.0 - kRegressionMargin)) {
+      chosen_est = "regression";
+      chosen_k = best_reg_k;
+      chosen_global = false;
+      best_err = best_reg_err;
     }
 
     best_k[t] = chosen_k;
@@ -752,8 +804,7 @@ List cpp_missknn_tune_categorical(
     int chosen_k = k_grid.size() ? k_grid[0] : 1;
     bool chosen_global = true;
 
-    for (int ki = 0; ki < k_grid.size(); ++ki) {
-      const int kk = k_grid[ki];
+    auto eval_vote = [&](int kk) -> double {
       int wrong = 0;
       int cnt = 0;
       for (int h = 0; h < n_hold; ++h) {
@@ -779,14 +830,34 @@ List cpp_missknn_tune_categorical(
         ++cnt;
         if (best_code != truth[h]) ++wrong;
       }
-      if (cnt > 0) {
-        const double err = static_cast<double>(wrong) / cnt;
-        if (err < best_err * (1.0 - kTuneMargin)) {
-          best_err = err;
-          chosen_k = kk;
-          chosen_global = false;
-        }
+      return cnt > 0 ? static_cast<double>(wrong) / cnt : R_PosInf;
+    };
+
+    for (int ki = 0; ki < k_grid.size(); ++ki) {
+      const int kk = k_grid[ki];
+      const double err = eval_vote(kk);
+      if (err < best_err * (1.0 - kTuneMargin)) {
+        best_err = err;
+        chosen_k = kk;
+        chosen_global = false;
       }
+    }
+
+    // As with the numeric wide-regression candidate: a small local vote can
+    // have needlessly high variance when the category is actually predicted
+    // by a stable pattern across the whole donor pool rather than a locally
+    // varying one. Evaluated against the pre-vote baseline directly (not
+    // gated behind the narrow vote's own margin) for the same reason. The
+    // chosen k is set far beyond any realistic donor pool (rather than to
+    // this tuning split's own n_train) so it means "use every available
+    // donor" at imputation time too, when the real donor pool -- capped at
+    // donor_cap -- is typically larger than the tuning split.
+    const int kWideSentinel = 1000000;
+    const double err_wide = eval_vote(n_train);
+    if (err_wide < best_err * (1.0 - kTuneMargin)) {
+      best_err = err_wide;
+      chosen_k = kWideSentinel;
+      chosen_global = false;
     }
 
     best_k[t] = chosen_k;
