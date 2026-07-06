@@ -30,22 +30,22 @@ Table: Runtime, NRMSE, and PFC on real biomedical datasets (20% MCAR)
 
 |dataset           |method     |    n|  p| runtime_sec|  nrmse|    pfc|
 |:-----------------|:----------|----:|--:|-----------:|------:|------:|
-|heart_failure     |missknn    |  299| 13|       0.050| 0.3546|     NA|
-|heart_failure     |missForest |  299| 13|       2.193| 0.3769|     NA|
-|heart_failure     |missRanger |  299| 13|       0.068| 0.3867|     NA|
-|heart_failure     |VIM::kNN   |  299| 13|       0.263| 0.3892|     NA|
+|heart_failure     |missknn    |  299| 13|       0.029| 0.3675| 0.3869|
+|heart_failure     |missForest |  299| 13|       0.996| 0.3844| 0.4114|
+|heart_failure     |missRanger |  299| 13|       0.373| 0.3959| 0.3896|
+|heart_failure     |VIM::kNN   |  299| 13|       0.266| 0.4000| 0.4005|
 |crc_mondaca2020   |missknn    |  457| 11|       0.057| 0.4081| 0.4346|
-|crc_mondaca2020   |missForest |  457| 11|       4.457| 0.4220| 0.4191|
-|crc_mondaca2020   |missRanger |  457| 11|       0.777| 0.4199| 0.3969|
-|crc_mondaca2020   |VIM::kNN   |  457| 11|       0.512| 0.5651| 0.4435|
-|arthritis         |missknn    | 4856| 11|       0.468| 0.7928| 0.2302|
-|arthritis         |missForest | 4856| 11|      28.617| 0.7115| 0.2661|
-|arthritis         |missRanger | 4856| 11|       5.006| 0.7164| 0.2197|
-|arthritis         |VIM::kNN   | 4856| 11|      26.443| 0.8365| 0.2459|
-|metabric_clinical |missknn    | 1839| 11|       0.451| 0.5821| 0.2983|
+|crc_mondaca2020   |missForest |  457| 11|       5.112| 0.4220| 0.4191|
+|crc_mondaca2020   |missRanger |  457| 11|       1.015| 0.4199| 0.3969|
+|crc_mondaca2020   |VIM::kNN   |  457| 11|       0.861| 0.5651| 0.4435|
+|arthritis         |missknn    | 4856| 11|       0.531| 0.7928| 0.2302|
+|arthritis         |missForest | 4856| 11|      29.897| 0.7115| 0.2661|
+|arthritis         |missRanger | 4856| 11|       4.906| 0.7164| 0.2197|
+|arthritis         |VIM::kNN   | 4856| 11|      27.709| 0.8365| 0.2459|
+|metabric_clinical |missknn    | 1839| 11|       0.623| 0.5821| 0.2983|
 |metabric_clinical |missForest | 1839| 11|          NA|     NA|     NA|
-|metabric_clinical |missRanger | 1839| 11|       3.497| 0.5725| 0.2898|
-|metabric_clinical |VIM::kNN   | 1839| 11|       3.475| 0.6473| 0.3362|
+|metabric_clinical |missRanger | 1839| 11|       3.002| 0.5725| 0.2898|
+|metabric_clinical |VIM::kNN   | 1839| 11|       3.768| 0.6473| 0.3362|
 
 ## Real-Data Scaling Point (n = 100,000)
 
@@ -53,6 +53,6 @@ Table: diabetes_prediction (n = 100,000): missForest excluded as computationally
 
 |dataset             |method     |     n|  p| runtime_sec|  nrmse| pfc|
 |:-------------------|:----------|-----:|--:|-----------:|------:|---:|
-|diabetes_prediction |missknn    | 1e+05|  9|      29.931| 0.3471|  NA|
-|diabetes_prediction |missRanger | 1e+05|  9|      73.406| 0.3616|  NA|
+|diabetes_prediction |missknn    | 1e+05|  9|      27.571| 0.3471|  NA|
+|diabetes_prediction |missRanger | 1e+05|  9|      66.918| 0.3616|  NA|
 
