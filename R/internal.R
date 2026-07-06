@@ -338,6 +338,12 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
 
     if (meta$classes[target] == "numeric") {
       col_k <- meta$k_per_col[target]
+      col_estimator <- meta$estimator_per_col[target]
+      # For "regression", k_per_col already stores the tuned regression
+      # bandwidth directly (picked from the same adaptive grid used for the
+      # weighted-mean k, spanning small local neighborhoods up to the entire
+      # donor pool), so it is used as-is rather than rescaled again here.
+      col_reg_neighbors <- min(col_k, length(donors_search))
       fills <- cpp_missknn_impute_numeric_column(
         working$numeric_scaled,
         working$numeric_raw,
@@ -351,11 +357,11 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
         meta$weights,
         col_k,
         meta$aggregation,
-        meta$estimator_per_col[target],
+        col_estimator,
         stochastic,
         meta$epsilon,
         meta$ridge,
-        max(4L * col_k, 30L)
+        col_reg_neighbors
       )
       working$original[[target]][receivers] <- fills
       working$numeric_raw[receivers, meta$numeric_pos[target]] <- fills
@@ -411,9 +417,15 @@ missknn_restore_types <- function(dt, meta) {
 }
 
 missknn_candidate_k <- function(n_train, k_default) {
-  # The global mean/mode baseline (evaluated separately in O(1) per holdout
-  # point) already covers the "no local structure, use everything" regime, so
-  # the k-grid itself only needs to span plausible local-neighborhood sizes.
+  # A single geometric bandwidth grid from small/local to the entire training
+  # pool, shared by the numeric weighted-mean search, the local-regression
+  # bandwidth search, and the categorical vote search. Spanning the full
+  # range in one grid -- rather than a small local grid plus a separate
+  # hardcoded "wide" special case -- means "how local should this column's
+  # estimate be" is one adaptive choice along a continuum, not a discrete
+  # local-vs-global switch bolted on afterwards. The O(1) global mean/mode
+  # fast path (Section 2.4) is still evaluated analytically as a baseline
+  # rather than via this grid, since it needs no distance search at all.
   base <- sort(unique(c(k_default, 5L, 15L, 40L)))
   base <- base[base <= n_train]
   if (!length(base)) {
