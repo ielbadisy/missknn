@@ -141,7 +141,10 @@ run_dataset <- function(name, truth, prop = 0.2, seed = 1L, run_missforest = TRU
 
 ## ---- Dataset preparation ----
 datasets <- list(
-  list(name = "heart_failure", data = prep_dataset(biostatlab::heart_failure), seed = 24),
+  list(name = "heart_failure", data = prep_dataset(
+    biostatlab::heart_failure,
+    factor_cols = c("anaemia", "diabetes", "high_blood_pressure", "sex", "smoking", "DEATH_EVENT")
+  ), seed = 24),
   list(name = "crc_mondaca2020", data = {
     cols_num <- c("Age_at_Metastases","Fraction_Genome_Altered","Mutation_Count","TMB_nonsynonymous","MSI_Score","time")
     cols_fac <- c("Sex","Stage_At_Diagnosis","Tumor_Location","Differentiation","Metastasis")
