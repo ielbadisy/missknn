@@ -1,3 +1,5 @@
-"method","numeric_mse","factor_accuracy"
-"missknn",0.158323844386732,0.97
-"missForest",0.154409263975221,0.9775
+"method","nrmse","pfc"
+"missknn",0.855083219088929,0.2
+"missForest",0.915502039319404,0.225
+"missRanger",0.824895024949588,0.2
+"VIM::kNN",0.956009849699924,0.2625
