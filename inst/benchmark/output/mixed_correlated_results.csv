@@ -1,3 +1,5 @@
-"method","mse"
-"missknn",0.120236290503754
-"missForest",0.110985687740088
+"method","nrmse"
+"missknn",0.822424087109002
+"missForest",0.807001770283166
+"missRanger",0.816231234375534
+"VIM::kNN",0.88844943861974
