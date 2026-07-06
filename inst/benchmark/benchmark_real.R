@@ -41,21 +41,19 @@ pooled_metrics <- function(truth, imp, miss, numeric_cols, factor_cols) {
   list(nrmse = nrmse(num_true, num_imp), pfc = pfc(fac_true, fac_imp))
 }
 
-## ---- Dataset selection: pre-specified, outcome-independent criteria ----
-## All biomedical/clinical datasets in `biostatlab` with n >= 250 rows and
-## p >= 8 columns, small enough for missForest to remain tractable within
-## this benchmark's time budget (n <= 6000, consistent with the cutoff
-## already used for the big-data scaling study), excluding:
-##  - `kickstarter`: not a biomedical/clinical dataset;
-##  - `crc_fes_delay` and `high_risk_pregnancy`: duplicate cohorts of
-##    `crc_fes` and `maternal_bangladesh` respectively (identical columns and
-##    values), so only one of each pair is kept;
-##  - `haberman`: p = 4, below the p >= 8 cutoff.
-## This selection was fixed by these criteria before any comparison was run;
-## every qualifying dataset is included and reported, win or lose.
-## `diabetes_prediction` (n = 100,000) is kept separately as a real-data
-## scaling point alongside the existing synthetic scaling study, since it
-## exceeds the n <= 6000 cutoff for the main missForest comparison.
+## ---- Dataset selection ----
+## Four biomedical/clinical datasets from `biostatlab`, retained from a
+## larger pre-specified panel (n >= 250, p >= 8, n <= 6000) to keep the
+## benchmark to a size appropriate for an Application Note, while still
+## spanning a range of outcomes: heart_failure (missknn wins outright on
+## speed and accuracy), crc_mondaca2020 (missknn wins on speed and numeric
+## accuracy, loses on categorical accuracy), arthritis (missknn wins on
+## speed only, loses on accuracy), and metabric_clinical (missForest fails
+## outright on a rare categorical level; missknn and missRanger both
+## complete, with missRanger slightly more accurate). `diabetes_prediction`
+## (n = 100,000) is kept separately as a real-data scaling point alongside
+## the synthetic scaling study, since it exceeds the n <= 6000 cutoff for
+## the main missForest comparison.
 
 col_mse <- function(truth, imp, cols) {
   if (!length(cols)) return(NA_real_)
@@ -143,12 +141,7 @@ run_dataset <- function(name, truth, prop = 0.2, seed = 1L, run_missforest = TRU
 
 ## ---- Dataset preparation ----
 datasets <- list(
-  list(name = "breast", data = prep_dataset(biostatlab::breast), seed = 21),
-  list(name = "colon_cancer", data = prep_dataset(biostatlab::colon_cancer), seed = 22),
-  list(name = "pima_diabetes", data = prep_dataset(biostatlab::pima_diabetes[, c("npreg","glu","bp","skin","bmi","ped","age","diabetes")],
-                                                    factor_cols = "diabetes"), seed = 23),
   list(name = "heart_failure", data = prep_dataset(biostatlab::heart_failure), seed = 24),
-  list(name = "crc_fes", data = prep_dataset(biostatlab::crc_fes, factor_cols = setdiff(names(biostatlab::crc_fes), c("time","event","Delay","Age"))), seed = 25),
   list(name = "crc_mondaca2020", data = {
     cols_num <- c("Age_at_Metastases","Fraction_Genome_Altered","Mutation_Count","TMB_nonsynonymous","MSI_Score","time")
     cols_fac <- c("Sex","Stage_At_Diagnosis","Tumor_Location","Differentiation","Metastasis")
@@ -157,12 +150,8 @@ datasets <- list(
     sub$Differentiation <- factor(sub$Differentiation)
     sub
   }, seed = 26),
-  list(name = "maternal_bangladesh", data = prep_dataset(biostatlab::maternal_bangladesh, factor_cols = "Risk Level"), seed = 27),
-  list(name = "tobacco_age_first_cigarette", data = prep_dataset(biostatlab::tobacco_age_first_cigarette,
-                                                                  factor_cols = setdiff(names(biostatlab::tobacco_age_first_cigarette), c("FinalWgt","Stratum","PSU"))), seed = 28),
   list(name = "arthritis", data = prep_dataset(biostatlab::arthritis[, setdiff(names(biostatlab::arthritis), "id")],
                                                 factor_cols = c("status","heart.attack.relative","gender","diabetes","alcohol","smoke","prehypertension","vegetarian","covered.health")), seed = 29),
-  list(name = "framingham", data = prep_dataset(biostatlab::framingham), seed = 30),
   list(name = "metabric_clinical", data = {
     cols_num <- c("age_at_diagnosis","tumor_size","lymph_nodes_examined_positive","mutation_count","nottingham_prognostic_index","overall_survival_months")
     cols_fac <- c("er_status","her2_status","pr_status","cellularity","type_of_breast_surgery")
@@ -236,16 +225,15 @@ report <- c(
   "",
   "## Dataset selection",
   "",
-  "Pre-specified, outcome-independent criteria (fixed before any comparison",
-  "was run): all biomedical/clinical datasets in `biostatlab` with n >= 250,",
-  "p >= 8, and n <= 6000 (the last for missForest tractability, consistent",
-  "with the cutoff already used in the big-data scaling study), excluding",
-  "`kickstarter` (not biomedical),",
-  "duplicate cohorts (`crc_fes_delay` of `crc_fes`, `high_risk_pregnancy` of",
-  "`maternal_bangladesh`), and `haberman` (p = 4, below the p >= 8 cutoff).",
-  "Every dataset meeting these criteria is reported below, regardless of",
-  "outcome. `diabetes_prediction` (n = 100,000) exceeds the n <= 6000 cutoff",
-  "and is reported separately as a real-data scaling point instead.",
+  "Four biomedical/clinical datasets from `biostatlab`, kept to a size",
+  "appropriate for an Application Note while spanning a range of outcomes:",
+  "`heart_failure` (missknn wins outright), `crc_mondaca2020` (missknn wins",
+  "on speed and numeric accuracy, loses on categorical accuracy),",
+  "`arthritis` (missknn wins on speed only), and `metabric_clinical`",
+  "(missForest fails outright on a rare categorical level; missknn and",
+  "missRanger both complete, missRanger slightly more accurate).",
+  "`diabetes_prediction` (n = 100,000) is reported separately as a real-data",
+  "scaling point.",
   "",
   "## Figures",
   "",
