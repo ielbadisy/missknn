@@ -13,7 +13,10 @@ It is fast by design:
 - a `donor_cap` bounds the neighbor-search candidate pool so cost stays roughly linear in `n`
   instead of quadratic, which matters at large `n`
 - `data.table` is used for lightweight tabular orchestration
-- multiple imputation can run multicore by default on Unix-like systems
+- multiple imputation (`m > 1`) can run multicore by default on Unix-like systems via `parallel::mclapply`
+- within a single imputation, the per-column holdout `k`/estimator tuning and the deterministic
+  (non-stochastic) neighbor search are parallelized across columns/receivers with `RcppParallel`,
+  on all platforms including Windows
 
 It supports:
 
@@ -21,6 +24,25 @@ It supports:
 - multiple imputation
 - numeric and mixed tabular data
 - `data.table`-friendly workflows
+
+## Parallel computing
+
+`missknn` parallelizes at two independent levels:
+
+- **Across imputations** (`m > 1`): each of the `m` completed datasets is generated in a
+  separate process via `parallel::mclapply`, controlled by `parallel_cores` (defaults to
+  `detectCores() - 1`). This only applies on Unix-like systems; it falls back to serial on
+  Windows.
+- **Within a single imputation**: the per-column holdout search that picks each column's `k`
+  and estimator, and the deterministic (`m = 1`) neighbor search/aggregation, are split across
+  threads with `RcppParallel::parallelFor` — across target columns for tuning, across receiver
+  rows for imputation. This runs on every platform, including Windows, and benefits `m = 1` runs
+  that get no benefit from `parallel_cores`. The stochastic sampling path used when `m > 1`
+  stays single-threaded per process, since R's RNG isn't thread-safe; that case still parallelizes
+  across the `m` processes instead.
+
+Thread count for the `RcppParallel` layer follows the usual `RcppParallel::setThreadOptions()` /
+`RCPP_PARALLEL_NUM_THREADS` conventions.
 
 ## Benchmark
 

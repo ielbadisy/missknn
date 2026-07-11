@@ -10,9 +10,12 @@ LazyData: false
 Imports:
     data.table,
     Rcpp,
+    RcppParallel,
     stats
 LinkingTo:
-    Rcpp
+    Rcpp,
+    RcppParallel
+SystemRequirements: GNU make
 Suggests:
     bench,
     ggplot2,
