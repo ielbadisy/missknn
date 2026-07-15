@@ -4,6 +4,7 @@ Title: Fast Masked K-Nearest Neighbor Imputation
 Version: 1.0.0
 Authors@R: person("Imad", "EL BADISY", email = "elbadisyimad@gmail.com", role = c("aut", "cre"))
 Description: Fast masked KNN imputation for tabular data with support for single and multiple imputation.
+Keywords: imputation, missing data, fast imputation, big data, k-nearest neighbors, RcppParallel
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false

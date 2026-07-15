@@ -41,7 +41,7 @@ uses process-level parallelism via `parallel::mclapply` on Unix-like systems.
   Windows.
 - **Within a single imputation**: the per-column holdout search that picks each column's `k`
   and estimator, and the deterministic (`m = 1`) neighbor search/aggregation, are split across
-  threads with `RcppParallel::parallelFor` — across target columns for tuning, across receiver
+  threads with `RcppParallel::parallelFor` - across target columns for tuning, across receiver
   rows for imputation. This runs on every platform, including Windows, and benefits `m = 1` runs
   that get no benefit from `parallel_cores`. The stochastic sampling path used when `m > 1`
   stays single-threaded per process, since R's RNG isn't thread-safe; that case still parallelizes
