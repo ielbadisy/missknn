@@ -25,6 +25,12 @@ It supports:
 - numeric and mixed tabular data
 - `data.table`-friendly workflows
 
+## Latest Implementation
+
+The current implementation parallelizes the per-column `k`/estimator tuning and the deterministic
+single-imputation path with `RcppParallel`, including on Windows. The `m > 1` stochastic path still
+uses process-level parallelism via `parallel::mclapply` on Unix-like systems.
+
 ## Parallel computing
 
 `missknn` parallelizes at two independent levels:
