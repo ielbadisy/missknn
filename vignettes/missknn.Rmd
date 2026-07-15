@@ -46,7 +46,7 @@ get a distance-weighted majority vote.
 
 ### A note on `complete()`
 
-`complete()` is a common generic name — packages like `mimar` or `tidyr` may also define one. If
+`complete()` is a common generic name - packages like `mimar` or `tidyr` may also define one. If
 another attached package's `complete()` shadows `missknn`'s, call it explicitly:
 
 ```{r, eval = FALSE}
