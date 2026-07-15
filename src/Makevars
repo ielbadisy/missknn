@@ -1,3 +1,5 @@
+CXX14FLAGS := $(filter-out -mno-omit-leaf-frame-pointer,$(CXX14FLAGS))
+
 RCPPPARALLEL_LIBDIR = $(shell "${R_HOME}/bin/Rscript" -e "cat(system.file('libs', package='RcppParallel'))")
 RCPPPARALLEL_TBBDIR = $(shell "${R_HOME}/bin/Rscript" -e "cat(RcppParallel::tbbLibraryPath())")
 
