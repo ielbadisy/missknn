@@ -5,6 +5,9 @@ src/*.o
 src/*.so
 src-i386/*.o
 src-x64/*.o
+.Rcheck/
+..Rcheck/
+src/symbols.rds
 .Rhistory
 .RData
 .Rproj.user

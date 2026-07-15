@@ -2,11 +2,10 @@ Package: missknn
 Type: Package
 Title: Fast Masked K-Nearest Neighbor Imputation
 Version: 1.0.0
-Author: Imad El Badisy
+Author: Imad El Badisy [aut, cre]
 Maintainer: Imad El Badisy <elbadisyimad@gmail.com>
-Authors@R: person("Imad", "EL BADISY", email = "elbadisyimad@gmail.com", role = c("aut", "cre"))
+Authors@R: person("Imad", "El Badisy", email = "elbadisyimad@gmail.com", role = c("aut", "cre"))
 Description: Fast masked KNN imputation for tabular data with support for single and multiple imputation.
-Keywords: imputation, missing data, fast imputation, big data, k-nearest neighbors, RcppParallel
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false
