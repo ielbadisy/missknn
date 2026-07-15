@@ -1,0 +1,6 @@
+RCPPPARALLEL_LIBDIR = $(shell "${R_HOME}/bin/Rscript" -e "cat(system.file('libs', package='RcppParallel'))")
+RCPPPARALLEL_TBBDIR = $(shell "${R_HOME}/bin/Rscript" -e "cat(RcppParallel::tbbLibraryPath())")
+
+PKG_CXXFLAGS = -DRCPP_PARALLEL_USE_TBB=1
+PKG_LIBS = -Wl,-rpath,$(RCPPPARALLEL_LIBDIR) $(RCPPPARALLEL_LIBDIR)/RcppParallel.so \
+           -L$(RCPPPARALLEL_TBBDIR) -Wl,-rpath,$(RCPPPARALLEL_TBBDIR) -ltbb

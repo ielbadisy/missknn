@@ -1,5 +1,6 @@
 useDynLib(missknn, .registration = TRUE)
 import(Rcpp)
+importFrom(RcppParallel,RcppParallelLibs)
 export(missknn)
 export(complete)
 export(print.missknn)
