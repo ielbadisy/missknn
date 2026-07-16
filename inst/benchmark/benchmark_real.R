@@ -212,7 +212,11 @@ table_md <- knitr::kable(
 )
 
 bign_md <- knitr::kable(
-  transform(dp_result, runtime_sec = round(runtime_sec, 4), nrmse = round(nrmse, 4), pfc = round(pfc, 4)),
+  transform(
+    dp_result,
+    n = format(n, big.mark = ",", scientific = FALSE, trim = TRUE),
+    runtime_sec = round(runtime_sec, 4), nrmse = round(nrmse, 4), pfc = round(pfc, 4)
+  ),
   format = "markdown",
   caption = "diabetes_prediction (n = 100,000): missForest excluded as computationally intractable at this n"
 )
