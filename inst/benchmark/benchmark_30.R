@@ -57,7 +57,7 @@ impute_methods <- function(df_miss, truth_x, seed) {
   timings <- bench::mark(
     missknn = complete(missknn(x_miss, k = 5L, m = 1L, seed = seed)),
     missForest = suppressWarnings(missForest::missForest(x_miss, verbose = FALSE)$ximp),
-    missRanger = suppressWarnings(missRanger::missRanger(x_miss, verbose = 0, num.trees = 100)),
+    missRanger = suppressWarnings(missRanger::missRanger(x_miss, verbose = 0, num.trees = 100, num.threads = 1)),
     `VIM::kNN` = suppressWarnings(as.data.frame(VIM::kNN(x_miss, k = 5L, imp_var = FALSE))),
     iterations = 1,
     check = FALSE
@@ -66,7 +66,7 @@ impute_methods <- function(df_miss, truth_x, seed) {
   completed <- list(
     missknn = complete(missknn(x_miss, k = 5L, m = 1L, seed = seed)),
     missForest = suppressWarnings(missForest::missForest(x_miss, verbose = FALSE)$ximp),
-    missRanger = suppressWarnings(missRanger::missRanger(x_miss, verbose = 0, num.trees = 100)),
+    missRanger = suppressWarnings(missRanger::missRanger(x_miss, verbose = 0, num.trees = 100, num.threads = 1)),
     `VIM::kNN` = suppressWarnings(as.data.frame(VIM::kNN(x_miss, k = 5L, imp_var = FALSE)))
   )
 

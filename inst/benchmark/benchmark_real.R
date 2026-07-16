@@ -103,7 +103,7 @@ run_dataset <- function(name, truth, prop = 0.2, seed = 1L, run_missforest = TRU
 
   mr <- NULL
   mr_time <- tryCatch(
-    system.time(mr <- suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100)))[["elapsed"]],
+    system.time(mr <- suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100, num.threads = 1)))[["elapsed"]],
     error = function(e) {
       message(sprintf("missRanger failed on '%s': %s", name, conditionMessage(e)))
       NA_real_
