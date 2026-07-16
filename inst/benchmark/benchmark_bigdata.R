@@ -121,7 +121,12 @@ ggsave(file.path(out_dir, "bigdata_mse_plot.png"), nrmse_plot, width = 8, height
 write.csv(bigdata_df, file.path(out_dir, "bigdata_results.csv"), row.names = FALSE)
 
 table_md <- knitr::kable(
-  transform(bigdata_df, runtime_sec = round(runtime_sec, 4), nrmse = round(nrmse, 5)),
+  transform(
+    bigdata_df,
+    n = format(n, big.mark = ",", scientific = FALSE, trim = TRUE),
+    runtime_sec = round(runtime_sec, 4),
+    nrmse = round(nrmse, 5)
+  ),
   format = "markdown",
   caption = "Runtime and NRMSE by method and sample size (one fresh Rscript process per run)"
 )

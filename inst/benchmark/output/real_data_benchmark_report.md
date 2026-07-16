@@ -53,6 +53,6 @@ Table: diabetes_prediction (n = 100,000): missForest excluded as computationally
 
 |dataset             |method     |     n|  p| runtime_sec|  nrmse| pfc|
 |:-------------------|:----------|-----:|--:|-----------:|------:|---:|
-|diabetes_prediction |missknn    | 1e+05|  9|      22.563| 0.3471|  NA|
-|diabetes_prediction |missRanger | 1e+05|  9|     155.830| 0.3616|  NA|
+|diabetes_prediction |missknn    | 100,000|  9|      22.563| 0.3471|  NA|
+|diabetes_prediction |missRanger | 100,000|  9|     155.830| 0.3616|  NA|
 

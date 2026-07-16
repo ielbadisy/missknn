@@ -25,6 +25,11 @@ It supports:
 - numeric and mixed tabular data
 - `data.table`-friendly workflows
 
+## About
+
+`missknn` is developed and maintained by Imad El Badisy (elbadisyimad@gmail.com), released
+under the MIT license.
+
 ## Latest Implementation
 
 The current implementation parallelizes the per-column `k`/estimator tuning and the deterministic
@@ -143,20 +148,20 @@ Rscript inst/benchmark/benchmark_bigdata.R
 
 Table: Runtime and NRMSE by method and sample size
 
-|     n|method     | runtime_sec|   nrmse|
-|-----:|:----------|-----------:|-------:|
-| 1e+03|missknn    |      0.0131| 1.00223|
-| 1e+03|missRanger |      0.1630| 1.15781|
-| 1e+03|missForest |      3.1537| 1.07461|
-| 1e+03|VIM::kNN   |      0.6088| 1.16132|
-| 5e+03|missknn    |      0.0321| 1.00020|
-| 5e+03|missRanger |      1.3632| 1.14478|
-| 5e+03|missForest |     75.1881| 1.03685|
-| 5e+03|VIM::kNN   |     10.9076| 1.15992|
-| 2e+04|missknn    |      0.0456| 0.99998|
-| 2e+04|missRanger |     10.3372| 1.14941|
-| 1e+05|missknn    |      0.0938| 1.00000|
-| 1e+05|missRanger |     85.6539| 1.14435|
+|      n|method     | runtime_sec|   nrmse|
+|------:|:----------|-----------:|-------:|
+|  1,000|missknn    |      0.0131| 1.00223|
+|  1,000|missRanger |      0.1630| 1.15781|
+|  1,000|missForest |      3.1537| 1.07461|
+|  1,000|VIM::kNN   |      0.6088| 1.16132|
+|  5,000|missknn    |      0.0321| 1.00020|
+|  5,000|missRanger |      1.3632| 1.14478|
+|  5,000|missForest |     75.1881| 1.03685|
+|  5,000|VIM::kNN   |     10.9076| 1.15992|
+| 20,000|missknn    |      0.0456| 0.99998|
+| 20,000|missRanger |     10.3372| 1.14941|
+|100,000|missknn    |      0.0938| 1.00000|
+|100,000|missRanger |     85.6539| 1.14435|
 
 `missForest`'s runtime already becomes impractical at n = 5,000 (over a minute) and would take
 hours at n = 100,000; `VIM::kNN`'s distance search is similarly infeasible past a few thousand
