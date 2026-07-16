@@ -32,16 +32,16 @@ Table: Runtime and NRMSE by method and sample size (one fresh Rscript process pe
 
 |     n|method     | runtime_sec|   nrmse|
 |-----:|:----------|-----------:|-------:|
-| 1e+03|missknn    |      0.0476| 1.00223|
-| 1e+03|missRanger |      0.0942| 1.15781|
-| 1e+03|missForest |      3.1344| 1.07461|
-| 1e+03|VIM::kNN   |      0.4911| 1.16132|
-| 5e+03|missknn    |      0.1337| 1.00020|
-| 5e+03|missRanger |      1.0260| 1.14478|
-| 5e+03|missForest |     73.0740| 1.03685|
-| 5e+03|VIM::kNN   |     10.3536| 1.15992|
-| 2e+04|missknn    |      0.1013| 0.99998|
-| 2e+04|missRanger |      5.8439| 1.14941|
-| 1e+05|missknn    |      0.2006| 1.00000|
-| 1e+05|missRanger |     48.0944| 1.14435|
+| 1e+03|missknn    |      0.0131| 1.00223|
+| 1e+03|missRanger |      0.1630| 1.15781|
+| 1e+03|missForest |      3.1537| 1.07461|
+| 1e+03|VIM::kNN   |      0.6088| 1.16132|
+| 5e+03|missknn    |      0.0321| 1.00020|
+| 5e+03|missRanger |      1.3632| 1.14478|
+| 5e+03|missForest |     75.1881| 1.03685|
+| 5e+03|VIM::kNN   |     10.9076| 1.15992|
+| 2e+04|missknn    |      0.0456| 0.99998|
+| 2e+04|missRanger |     10.3372| 1.14941|
+| 1e+05|missknn    |      0.0938| 1.00000|
+| 1e+05|missRanger |     85.6539| 1.14435|
 

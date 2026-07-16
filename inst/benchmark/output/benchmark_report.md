@@ -23,10 +23,10 @@ Table: Mean runtime across 30 simulations
 
 |method     | runtime_sec| sd_runtime|
 |:----------|-----------:|----------:|
-|missknn    |      0.0049|     0.0012|
-|missForest |      0.5105|     0.1543|
-|missRanger |      0.0224|     0.0031|
-|VIM::kNN   |      0.0604|     0.0117|
+|missknn    |      0.0028|     0.0009|
+|missForest |      0.5111|     0.1677|
+|missRanger |      0.0333|     0.0049|
+|VIM::kNN   |      0.0632|     0.0117|
 
 ## NRMSE Table
 

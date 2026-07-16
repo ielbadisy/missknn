@@ -49,7 +49,7 @@ method <- '%s'
 call_fn <- switch(method,
   missknn = function() complete(missknn(miss, k = 5L, m = 1L, seed = 1L)),
   missForest = function() suppressWarnings(missForest::missForest(miss, verbose = FALSE)$ximp),
-  missRanger = function() suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100)),
+  missRanger = function() suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100, num.threads = 1)),
   `VIM::kNN` = function() suppressWarnings(as.data.frame(VIM::kNN(miss, k = 5L, imp_var = FALSE)))
 )
 # A single bench::mark() iteration is noisy for calls this fast: whether one

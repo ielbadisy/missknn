@@ -35,7 +35,7 @@ run_all_methods <- function(miss, numeric_cols, factor_cols) {
   list(
     missknn = missknn::complete(missknn(miss, k = 5L, m = 1L, seed = 1L)),
     missForest = suppressWarnings(missForest::missForest(miss, verbose = FALSE)$ximp),
-    missRanger = suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100)),
+    missRanger = suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100, num.threads = 1)),
     `VIM::kNN` = suppressWarnings(as.data.frame(VIM::kNN(miss, k = 5L, imp_var = FALSE)))
   )
 }
