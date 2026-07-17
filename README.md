@@ -1,6 +1,6 @@
 # missknn
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ielbadisy/missknn)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://CRAN.R-project.org/package=missknn)
 
 `missknn` is an R package for fast masked k-nearest neighbor imputation of missing values in tabular data.
 
