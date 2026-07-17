@@ -4,6 +4,15 @@
 
 `missknn` is an R package for fast masked k-nearest neighbor imputation of missing values in tabular data.
 
+## Installation
+
+Install the development version from GitHub with:
+
+```r
+install.packages("remotes")
+remotes::install_github("ielbadisy/missknn")
+```
+
 It is fast by design:
 
 - distance computation, donor ranking, and aggregation are done in C++, with partial (not full)
