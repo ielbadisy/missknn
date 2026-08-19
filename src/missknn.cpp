@@ -1,5 +1,7 @@
+// [[Rcpp::depends(RcppProgress)]]
 #include <Rcpp.h>
 #include <RcppParallel.h>
+#include <progress.hpp>
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -8,6 +10,30 @@
 #include <vector>
 
 using namespace Rcpp;
+
+// RcppProgress's master-thread detection (InterruptableProgressMonitor::is_master())
+// is only correct under OpenMP: without _OPENMP defined it always returns true, so
+// every RcppParallel worker thread would believe itself to be the master and race on
+// the shared progress state. This package parallelizes via RcppParallel (TBB/std::thread),
+// not OpenMP, so Progress::increment() must never be called from inside a Worker's
+// operator(). When display_progress is requested, the same Worker functor is instead
+// invoked serially, one chunk at a time, from the calling (single) thread, which is
+// the documented-safe way to drive a Progress bar.
+template <typename WorkerT>
+static void missknn_run_with_optional_progress(WorkerT& worker, int n, bool display_progress) {
+  if (!display_progress) {
+    RcppParallel::parallelFor(0, n, worker);
+    return;
+  }
+  Progress p(static_cast<unsigned long>(n), true);
+  for (int i = 0; i < n; ++i) {
+    if (Progress::check_abort()) {
+      Rcpp::stop("missknn: interrupted by user.");
+    }
+    worker(static_cast<std::size_t>(i), static_cast<std::size_t>(i + 1));
+    p.increment();
+  }
+}
 using namespace RcppParallel;
 
 // Minimum relative holdout-error improvement a local (KNN/regression)
@@ -488,7 +514,8 @@ NumericVector cpp_missknn_impute_numeric_column(
     const bool stochastic,
     const double epsilon,
     const double ridge,
-    const int reg_neighbors) {
+    const int reg_neighbors,
+    const bool display_progress = false) {
   const int n_recv = receiver_rows.size();
   const int n_don = donor_rows.size();
   const int target_pos = numeric_pos[target_col - 1] - 1;
@@ -512,7 +539,7 @@ NumericVector cpp_missknn_impute_numeric_column(
                                 donor_rows_v, receiver_rows_v, target_col, target_pos,
                                 weights_v, k, aggregation, estimator, epsilon, ridge,
                                 reg_neighbors, out);
-    parallelFor(0, n_recv, worker);
+    missknn_run_with_optional_progress(worker, n_recv, display_progress);
     return out;
   }
 
@@ -523,7 +550,12 @@ NumericVector cpp_missknn_impute_numeric_column(
   std::vector<int> topk;
   std::vector<int> topk_reg;
 
+  Progress p_stoch(static_cast<unsigned long>(n_recv), display_progress);
   for (int r = 0; r < n_recv; ++r) {
+    if (Progress::check_abort()) {
+      Rcpp::stop("missknn: interrupted by user.");
+    }
+    p_stoch.increment();
     const int receiver = receiver_rows_v[r];
     for (int j = 0; j < n_don; ++j) {
       distances[j] = missknn_distance(receiver - 1, donor_rows_v[j] - 1, target_col - 1,
@@ -731,7 +763,8 @@ IntegerVector cpp_missknn_impute_categorical_column(
     const int k,
     const std::string& aggregation,
     const bool stochastic,
-    const double epsilon) {
+    const double epsilon,
+    const bool display_progress = false) {
   const int n_recv = receiver_rows.size();
   const int n_don = donor_rows.size();
   const int target_pos = categorical_pos[target_col - 1] - 1;
@@ -754,7 +787,7 @@ IntegerVector cpp_missknn_impute_categorical_column(
                                     numeric_pos_v, categorical_pos_v, donor_rows_v,
                                     receiver_rows_v, target_col, target_pos, weights_v,
                                     k, aggregation, epsilon, out);
-    parallelFor(0, n_recv, worker);
+    missknn_run_with_optional_progress(worker, n_recv, display_progress);
     return out;
   }
 
@@ -763,7 +796,12 @@ IntegerVector cpp_missknn_impute_categorical_column(
   std::vector<double> distances(n_don);
   std::vector<int> topk;
 
+  Progress p_stoch(static_cast<unsigned long>(n_recv), display_progress);
   for (int r = 0; r < n_recv; ++r) {
+    if (Progress::check_abort()) {
+      Rcpp::stop("missknn: interrupted by user.");
+    }
+    p_stoch.increment();
     const int receiver = receiver_rows_v[r];
     for (int j = 0; j < n_don; ++j) {
       distances[j] = missknn_distance(receiver - 1, donor_rows_v[j] - 1, target_col - 1,
@@ -1070,7 +1108,8 @@ List cpp_missknn_tune_numeric(
     const IntegerVector& target_cols,
     const List& train_list,
     const List& hold_list,
-    const List& k_grid_list) {
+    const List& k_grid_list,
+    const bool display_progress = false) {
   const int ntar = target_cols.size();
 
   const std::vector<int> col_types_v(col_types.begin(), col_types.end());
@@ -1094,7 +1133,7 @@ List cpp_missknn_tune_numeric(
   TuneNumericWorker worker(numeric_scaled, numeric_raw, categorical_codes, col_types_v,
                             numeric_pos_v, categorical_pos_v, weights_v, epsilon, ridge,
                             target_cols_v, train_v, hold_v, k_grid_v, out_k, out_est, out_global);
-  parallelFor(0, ntar, worker);
+  missknn_run_with_optional_progress(worker, ntar, display_progress);
 
   IntegerVector best_k(ntar);
   CharacterVector best_est(ntar);
@@ -1295,7 +1334,8 @@ List cpp_missknn_tune_categorical(
     const IntegerVector& target_cols,
     const List& train_list,
     const List& hold_list,
-    const List& k_grid_list) {
+    const List& k_grid_list,
+    const bool display_progress = false) {
   const int ntar = target_cols.size();
 
   const std::vector<int> col_types_v(col_types.begin(), col_types.end());
@@ -1319,7 +1359,7 @@ List cpp_missknn_tune_categorical(
   TuneCategoricalWorker worker(numeric_scaled, categorical_codes, col_types_v, numeric_pos_v,
                                 categorical_pos_v, weights_v, epsilon, target_cols_v,
                                 train_v, hold_v, k_grid_v, out_k, out_global);
-  parallelFor(0, ntar, worker);
+  missknn_run_with_optional_progress(worker, ntar, display_progress);
 
   IntegerVector best_k(ntar);
   LogicalVector is_global(ntar);

@@ -32,6 +32,12 @@
 #' @param parallel_cores Number of cores used when `m > 1`. Defaults to the
 #'   available cores minus one, capped at 2 under `R CMD check`-style
 #'   environments that set `_R_CHECK_LIMIT_CORES_`.
+#' @param progress Logical; if `TRUE`, shows a console progress bar over the
+#'   receiver rows (or, during tuning, over target columns) of each column's
+#'   masked-distance search, which is where compute time concentrates on
+#'   large datasets. Automatically disabled when `m > 1` and imputations run
+#'   in parallel forked processes (`parallel_cores > 1`), since console
+#'   output from forked workers cannot be displayed live. Default `FALSE`.
 #'
 #' @details
 #' Let \eqn{X = (x_{ij})} be an \eqn{n \times p} data matrix and let \eqn{R_{ij}} be the
@@ -76,7 +82,8 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                     numeric_estimator = c("regression", "mean"), ridge = 1e-4,
                     donor_cap = 2000L,
                     max_iter = 1L,
-                    parallel_cores = missknn_default_cores()) {
+                    parallel_cores = missknn_default_cores(),
+                    progress = FALSE) {
   weights <- match.arg(weights)
   numeric_estimator <- match.arg(numeric_estimator)
   dt <- missknn_validate_input(data)
@@ -90,9 +97,12 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
   if (donor_cap < 1) stop("`donor_cap` must be at least 1.", call. = FALSE)
   if (m > 1L && parallel_cores < 1) stop("`parallel_cores` must be at least 1.", call. = FALSE)
 
+  runs_forked <- m > 1L && parallel_cores > 1L && .Platform$OS.type == "unix"
+  use_progress <- isTRUE(progress) && !runs_forked
+
   meta <- missknn_make_meta(dt, k = k, scale = scale, weights = weights, add_indicator = add_indicator,
                              seed = seed, numeric_estimator = numeric_estimator, ridge = ridge,
-                             donor_cap = donor_cap)
+                             donor_cap = donor_cap, progress = use_progress)
 
   run_one <- function(r) {
     working <- data.table::copy(dt)
@@ -102,7 +112,7 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
     missknn_finalize(working, dt, meta, add_indicator)
   }
 
-  if (m > 1L && parallel_cores > 1L && .Platform$OS.type == "unix") {
+  if (runs_forked) {
     completed_sets <- parallel::mclapply(seq_len(m), run_one, mc.cores = parallel_cores)
   } else {
     completed_sets <- lapply(seq_len(m), run_one)

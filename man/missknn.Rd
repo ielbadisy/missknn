@@ -19,7 +19,8 @@ missknn(
   ridge = 1e-04,
   donor_cap = 2000L,
   max_iter = 1L,
-  parallel_cores = missknn_default_cores()
+  parallel_cores = missknn_default_cores(),
+  progress = FALSE
 )
 
 \method{print}{missknn}(x, ...)
@@ -68,6 +69,13 @@ always uses every donor.}
 \item{parallel_cores}{Number of cores used when `m > 1`. Defaults to the
 available cores minus one, capped at 2 under `R CMD check`-style
 environments that set `_R_CHECK_LIMIT_CORES_`.}
+
+\item{progress}{Logical; if `TRUE`, shows a console progress bar over the
+receiver rows (or, during tuning, over target columns) of each column's
+masked-distance search, which is where compute time concentrates on
+large datasets. Automatically disabled when `m > 1` and imputations run
+in parallel forked processes (`parallel_cores > 1`), since console
+output from forked workers cannot be displayed live. Default `FALSE`.}
 
 \item{x}{A `missknn` object (`print.missknn`) or a `summary.missknn` object
 (`print.summary.missknn`).}
