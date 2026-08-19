@@ -10,6 +10,32 @@ missknn_default_cores <- function() {
   max(1L, parallel::detectCores() - 1L)
 }
 
+# A cli bar is opened per column/tuning-batch (labelled by name) and closed
+# right after that call returns; `.auto_close = FALSE` because relying on
+# cli's default frame-based auto-close would only clear the bar when the
+# *enclosing* function returns, not after each column, leaving finished
+# bars stacked on screen instead of replaced in place.
+missknn_progress_start <- function(label, total, enabled) {
+  if (!isTRUE(enabled) || total <= 0) {
+    return(NULL)
+  }
+  cli::cli_progress_bar(name = label, total = total, clear = FALSE, .auto_close = FALSE)
+}
+
+missknn_progress_cb <- function(id) {
+  if (is.null(id)) {
+    return(NULL)
+  }
+  function(done, total) cli::cli_progress_update(id = id, set = done)
+}
+
+missknn_progress_done <- function(id) {
+  if (!is.null(id)) {
+    cli::cli_progress_done(id = id)
+  }
+  invisible(NULL)
+}
+
 missknn_validate_input <- function(data) {
   if (!is.data.frame(data) && !is.matrix(data)) {
     stop("`data` must be a data.frame or matrix.", call. = FALSE)
@@ -344,6 +370,10 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
       # weighted-mean k, spanning small local neighborhoods up to the entire
       # donor pool), so it is used as-is rather than rescaled again here.
       col_reg_neighbors <- min(col_k, length(donors_search))
+      pb_id <- missknn_progress_start(
+        paste0("Imputing ", names(meta$classes)[target]),
+        length(receivers), isTRUE(meta$progress)
+      )
       fills <- cpp_missknn_impute_numeric_column(
         working$numeric_scaled,
         working$numeric_raw,
@@ -362,8 +392,10 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
         meta$epsilon,
         meta$ridge,
         col_reg_neighbors,
-        isTRUE(meta$progress)
+        isTRUE(meta$progress),
+        missknn_progress_cb(pb_id)
       )
+      missknn_progress_done(pb_id)
       working$original[[target]][receivers] <- fills
       working$numeric_raw[receivers, meta$numeric_pos[target]] <- fills
       if (isTRUE(meta$scale)) {
@@ -373,6 +405,10 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
         working$numeric_scaled[receivers, meta$numeric_pos[target]] <- fills
       }
     } else {
+      pb_id <- missknn_progress_start(
+        paste0("Imputing ", names(meta$classes)[target]),
+        length(receivers), isTRUE(meta$progress)
+      )
       codes <- cpp_missknn_impute_categorical_column(
         working$numeric_scaled,
         working$categorical,
@@ -387,8 +423,10 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
         meta$aggregation,
         stochastic,
         meta$epsilon,
-        isTRUE(meta$progress)
+        isTRUE(meta$progress),
+        missknn_progress_cb(pb_id)
       )
+      missknn_progress_done(pb_id)
       fills <- vapply(codes, missknn_decode_categorical, character(1), meta = meta, target = target)
       working$original[[target]][receivers] <- fills
       working$categorical[receivers, meta$categorical_pos[target]] <- codes
@@ -501,24 +539,28 @@ missknn_tune_all <- function(dt, meta) {
   }
 
   if (length(num_targets)) {
+    pb_id <- missknn_progress_start("Tuning numeric columns", length(num_targets), isTRUE(meta$progress))
     res <- cpp_missknn_tune_numeric(
       meta$numeric$scaled_matrix, meta$numeric$raw_matrix, meta$categorical$matrix,
       meta$type_codes, meta$numeric_pos, meta$categorical_pos, meta$weights,
       meta$epsilon, meta$ridge, num_targets, num_train, num_hold, num_kgrid,
-      isTRUE(meta$progress)
+      isTRUE(meta$progress), missknn_progress_cb(pb_id)
     )
+    missknn_progress_done(pb_id)
     k_per_col[num_targets] <- res$k
     estimator_per_col[num_targets] <- res$estimator
     is_global_col[num_targets] <- res$is_global
   }
 
   if (length(cat_targets)) {
+    pb_id <- missknn_progress_start("Tuning categorical columns", length(cat_targets), isTRUE(meta$progress))
     res_cat <- cpp_missknn_tune_categorical(
       meta$numeric$scaled_matrix, meta$categorical$matrix,
       meta$type_codes, meta$numeric_pos, meta$categorical_pos, meta$weights,
       meta$epsilon, cat_targets, cat_train, cat_hold, cat_kgrid,
-      isTRUE(meta$progress)
+      isTRUE(meta$progress), missknn_progress_cb(pb_id)
     )
+    missknn_progress_done(pb_id)
     k_per_col[cat_targets] <- res_cat$k
     is_global_col[cat_targets] <- res_cat$is_global
   }
