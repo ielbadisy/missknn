@@ -10,28 +10,49 @@ missknn_default_cores <- function() {
   max(1L, parallel::detectCores() - 1L)
 }
 
-# A cli bar is opened per column/tuning-batch (labelled by name) and closed
-# right after that call returns; `.auto_close = FALSE` because relying on
-# cli's default frame-based auto-close would only clear the bar when the
-# *enclosing* function returns, not after each column, leaving finished
-# bars stacked on screen instead of replaced in place.
+# Self-contained base-R progress display (no package dependency): a single
+# updating line per column/tuning-batch, written via carriage return, with
+# a bracketed bar, percentage, and an elapsed-time-based ETA. Uncolored by
+# design. A bar is opened per column/tuning-batch (labelled by name) and
+# closed with a newline right after that call returns, so finished bars
+# stay on their own line instead of being overwritten by the next one.
+missknn_progress_bar_width <- 30L
+# Wide enough for the longest built-in label, "Tuning categorical columns"
+# (27 chars), plus a one-space margin before the bracketed bar.
+missknn_progress_label_width <- 28L
+
 missknn_progress_start <- function(label, total, enabled) {
   if (!isTRUE(enabled) || total <= 0) {
     return(NULL)
   }
-  cli::cli_progress_bar(name = label, total = total, clear = FALSE, .auto_close = FALSE)
+  list(label = label, total = total, start = Sys.time())
 }
 
-missknn_progress_cb <- function(id) {
-  if (is.null(id)) {
+missknn_progress_cb <- function(state) {
+  if (is.null(state)) {
     return(NULL)
   }
-  function(done, total) cli::cli_progress_update(id = id, set = done)
+  function(done, total) {
+    width <- missknn_progress_bar_width
+    frac <- done / total
+    filled <- as.integer(round(frac * width))
+    bar <- paste0(
+      strrep("=", max(0L, filled - 1L)),
+      if (filled > 0L) ">" else "",
+      strrep(" ", width - filled)
+    )
+    elapsed <- as.numeric(difftime(Sys.time(), state$start, units = "secs"))
+    eta <- if (done > 0L && done < total) elapsed / done * (total - done) else 0
+    label <- formatC(state$label, width = -missknn_progress_label_width)
+    label <- substr(label, 1L, missknn_progress_label_width)
+    cat(sprintf("\r%s [%s] %3d%%  ETA: %ds", label, bar, as.integer(round(100 * frac)), as.integer(round(eta))))
+    utils::flush.console()
+  }
 }
 
-missknn_progress_done <- function(id) {
-  if (!is.null(id)) {
-    cli::cli_progress_done(id = id)
+missknn_progress_done <- function(state) {
+  if (!is.null(state)) {
+    cat("\n")
   }
   invisible(NULL)
 }
