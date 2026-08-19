@@ -72,11 +72,17 @@ Thread count for the `RcppParallel` layer follows the usual `RcppParallel::setTh
 imp <- missknn(big_data, k = 5, progress = TRUE)
 ```
 
-With `progress = TRUE`, `missknn()` shows a live [`cli`](https://cli.r-lib.org/) progress bar for
-each tuning stage (`Tuning numeric columns`, `Tuning categorical columns`) and for each column
-that goes through the neighbor search (`Imputing <column>`). Columns with no locally exploitable
-signal (filled directly from the global mean/mode, see the `missknn()` API entry above) don't get
-a bar, since they skip the neighbor search entirely.
+With `progress = TRUE`, `missknn()` shows a live, self-contained (base R only, no extra
+dependency) progress bar for each tuning stage (`Tuning numeric columns`,
+`Tuning categorical columns`) and for each column that goes through the neighbor search
+(`Imputing <column>`), updating in place with a percentage and an ETA, e.g.:
+
+```
+Imputing x2              [===========>------------------]  38%  ETA: 4s
+```
+
+Columns with no locally exploitable signal (filled directly from the global mean/mode, see the
+`missknn()` API entry above) don't get a bar, since they skip the neighbor search entirely.
 
 Because `RcppParallel` worker threads can't safely drive a progress display, requesting
 `progress = TRUE` runs that column's search on a single thread instead of in parallel - an
