@@ -66,6 +66,24 @@ uses process-level parallelism via `parallel::mclapply` on Unix-like systems.
 Thread count for the `RcppParallel` layer follows the usual `RcppParallel::setThreadOptions()` /
 `RCPP_PARALLEL_NUM_THREADS` conventions.
 
+## Progress reporting
+
+```r
+imp <- missknn(big_data, k = 5, progress = TRUE)
+```
+
+With `progress = TRUE`, `missknn()` shows a live [`cli`](https://cli.r-lib.org/) progress bar for
+each tuning stage (`Tuning numeric columns`, `Tuning categorical columns`) and for each column
+that goes through the neighbor search (`Imputing <column>`). Columns with no locally exploitable
+signal (filled directly from the global mean/mode, see the `missknn()` API entry above) don't get
+a bar, since they skip the neighbor search entirely.
+
+Because `RcppParallel` worker threads can't safely drive a progress display, requesting
+`progress = TRUE` runs that column's search on a single thread instead of in parallel - an
+explicit, visible-vs-fast tradeoff, not a bug. Leave `progress = FALSE` (the default) for the
+fastest run. `progress` is also automatically disabled whenever `m > 1` with `parallel_cores > 1`,
+since console output from `parallel::mclapply`'s forked worker processes can't be shown live.
+
 ## Benchmark
 
 Two benchmark scripts write reports, plots, and CSV tables to `inst/benchmark/output/`:
@@ -80,7 +98,7 @@ Rscript inst/benchmark/benchmark_bigdata.R
 
 ## API
 
-### `missknn(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE, seed = NULL, weights = c("distance", "uniform"), numeric_estimator = c("regression", "mean"), ridge = 1e-4, donor_cap = 2000L, max_iter = 1L, parallel_cores = missknn_default_cores())`
+### `missknn(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE, seed = NULL, weights = c("distance", "uniform"), numeric_estimator = c("regression", "mean"), ridge = 1e-4, donor_cap = 2000L, max_iter = 1L, parallel_cores = missknn_default_cores(), progress = FALSE)`
 
 Fits masked KNN imputation and returns a `missknn` object.
 
@@ -98,6 +116,7 @@ Fits masked KNN imputation and returns a `missknn` object.
 | `donor_cap` | Caps the donor pool searched per target column, subsampling once per column when exceeded, so search cost stays roughly linear in `n`. Does not affect the global mean/mode fallback, which always uses every donor. |
 | `max_iter` | Number of single-pass refinement iterations over the whole dataset. |
 | `parallel_cores` | Cores used across the `m` completed datasets when `m > 1` (via `parallel::mclapply`, Unix-like only). Defaults to `detectCores() - 1`. Independent of the `RcppParallel` threading used within a single imputation (see [Parallel computing](#parallel-computing)). |
+| `progress` | Show a live `cli` progress bar per tuning stage and per imputed column (see [Progress reporting](#progress-reporting)). Default `FALSE`. |
 
 Columns with no locally exploitable signal are detected during fitting and filled from the
 global mean/mode directly, without a neighbor search.
