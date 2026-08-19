@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // cpp_missknn_impute_numeric_column
-NumericVector cpp_missknn_impute_numeric_column(const NumericMatrix& numeric_scaled, const NumericMatrix& numeric_raw, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const IntegerVector& donor_rows, const IntegerVector& receiver_rows, const int target_col, const NumericVector& weights, const int k, const std::string& aggregation, const std::string& estimator, const bool stochastic, const double epsilon, const double ridge, const int reg_neighbors);
-RcppExport SEXP _missknn_cpp_missknn_impute_numeric_column(SEXP numeric_scaledSEXP, SEXP numeric_rawSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP donor_rowsSEXP, SEXP receiver_rowsSEXP, SEXP target_colSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP aggregationSEXP, SEXP estimatorSEXP, SEXP stochasticSEXP, SEXP epsilonSEXP, SEXP ridgeSEXP, SEXP reg_neighborsSEXP) {
+NumericVector cpp_missknn_impute_numeric_column(const NumericMatrix& numeric_scaled, const NumericMatrix& numeric_raw, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const IntegerVector& donor_rows, const IntegerVector& receiver_rows, const int target_col, const NumericVector& weights, const int k, const std::string& aggregation, const std::string& estimator, const bool stochastic, const double epsilon, const double ridge, const int reg_neighbors, const bool display_progress);
+RcppExport SEXP _missknn_cpp_missknn_impute_numeric_column(SEXP numeric_scaledSEXP, SEXP numeric_rawSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP donor_rowsSEXP, SEXP receiver_rowsSEXP, SEXP target_colSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP aggregationSEXP, SEXP estimatorSEXP, SEXP stochasticSEXP, SEXP epsilonSEXP, SEXP ridgeSEXP, SEXP reg_neighborsSEXP, SEXP display_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -33,13 +33,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type epsilon(epsilonSEXP);
     Rcpp::traits::input_parameter< const double >::type ridge(ridgeSEXP);
     Rcpp::traits::input_parameter< const int >::type reg_neighbors(reg_neighborsSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_missknn_impute_numeric_column(numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, donor_rows, receiver_rows, target_col, weights, k, aggregation, estimator, stochastic, epsilon, ridge, reg_neighbors));
+    Rcpp::traits::input_parameter< const bool >::type display_progress(display_progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_missknn_impute_numeric_column(numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, donor_rows, receiver_rows, target_col, weights, k, aggregation, estimator, stochastic, epsilon, ridge, reg_neighbors, display_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 // cpp_missknn_impute_categorical_column
-IntegerVector cpp_missknn_impute_categorical_column(const NumericMatrix& numeric_scaled, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const IntegerVector& donor_rows, const IntegerVector& receiver_rows, const int target_col, const NumericVector& weights, const int k, const std::string& aggregation, const bool stochastic, const double epsilon);
-RcppExport SEXP _missknn_cpp_missknn_impute_categorical_column(SEXP numeric_scaledSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP donor_rowsSEXP, SEXP receiver_rowsSEXP, SEXP target_colSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP aggregationSEXP, SEXP stochasticSEXP, SEXP epsilonSEXP) {
+IntegerVector cpp_missknn_impute_categorical_column(const NumericMatrix& numeric_scaled, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const IntegerVector& donor_rows, const IntegerVector& receiver_rows, const int target_col, const NumericVector& weights, const int k, const std::string& aggregation, const bool stochastic, const double epsilon, const bool display_progress);
+RcppExport SEXP _missknn_cpp_missknn_impute_categorical_column(SEXP numeric_scaledSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP donor_rowsSEXP, SEXP receiver_rowsSEXP, SEXP target_colSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP aggregationSEXP, SEXP stochasticSEXP, SEXP epsilonSEXP, SEXP display_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,13 +57,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string& >::type aggregation(aggregationSEXP);
     Rcpp::traits::input_parameter< const bool >::type stochastic(stochasticSEXP);
     Rcpp::traits::input_parameter< const double >::type epsilon(epsilonSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_missknn_impute_categorical_column(numeric_scaled, categorical_codes, col_types, numeric_pos, categorical_pos, donor_rows, receiver_rows, target_col, weights, k, aggregation, stochastic, epsilon));
+    Rcpp::traits::input_parameter< const bool >::type display_progress(display_progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_missknn_impute_categorical_column(numeric_scaled, categorical_codes, col_types, numeric_pos, categorical_pos, donor_rows, receiver_rows, target_col, weights, k, aggregation, stochastic, epsilon, display_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 // cpp_missknn_tune_numeric
-List cpp_missknn_tune_numeric(const NumericMatrix& numeric_scaled, const NumericMatrix& numeric_raw, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const NumericVector& weights, const double epsilon, const double ridge, const IntegerVector& target_cols, const List& train_list, const List& hold_list, const List& k_grid_list);
-RcppExport SEXP _missknn_cpp_missknn_tune_numeric(SEXP numeric_scaledSEXP, SEXP numeric_rawSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP weightsSEXP, SEXP epsilonSEXP, SEXP ridgeSEXP, SEXP target_colsSEXP, SEXP train_listSEXP, SEXP hold_listSEXP, SEXP k_grid_listSEXP) {
+List cpp_missknn_tune_numeric(const NumericMatrix& numeric_scaled, const NumericMatrix& numeric_raw, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const NumericVector& weights, const double epsilon, const double ridge, const IntegerVector& target_cols, const List& train_list, const List& hold_list, const List& k_grid_list, const bool display_progress);
+RcppExport SEXP _missknn_cpp_missknn_tune_numeric(SEXP numeric_scaledSEXP, SEXP numeric_rawSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP weightsSEXP, SEXP epsilonSEXP, SEXP ridgeSEXP, SEXP target_colsSEXP, SEXP train_listSEXP, SEXP hold_listSEXP, SEXP k_grid_listSEXP, SEXP display_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,13 +81,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const List& >::type train_list(train_listSEXP);
     Rcpp::traits::input_parameter< const List& >::type hold_list(hold_listSEXP);
     Rcpp::traits::input_parameter< const List& >::type k_grid_list(k_grid_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_missknn_tune_numeric(numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, ridge, target_cols, train_list, hold_list, k_grid_list));
+    Rcpp::traits::input_parameter< const bool >::type display_progress(display_progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_missknn_tune_numeric(numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, ridge, target_cols, train_list, hold_list, k_grid_list, display_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 // cpp_missknn_tune_categorical
-List cpp_missknn_tune_categorical(const NumericMatrix& numeric_scaled, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const NumericVector& weights, const double epsilon, const IntegerVector& target_cols, const List& train_list, const List& hold_list, const List& k_grid_list);
-RcppExport SEXP _missknn_cpp_missknn_tune_categorical(SEXP numeric_scaledSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP weightsSEXP, SEXP epsilonSEXP, SEXP target_colsSEXP, SEXP train_listSEXP, SEXP hold_listSEXP, SEXP k_grid_listSEXP) {
+List cpp_missknn_tune_categorical(const NumericMatrix& numeric_scaled, const IntegerMatrix& categorical_codes, const IntegerVector& col_types, const IntegerVector& numeric_pos, const IntegerVector& categorical_pos, const NumericVector& weights, const double epsilon, const IntegerVector& target_cols, const List& train_list, const List& hold_list, const List& k_grid_list, const bool display_progress);
+RcppExport SEXP _missknn_cpp_missknn_tune_categorical(SEXP numeric_scaledSEXP, SEXP categorical_codesSEXP, SEXP col_typesSEXP, SEXP numeric_posSEXP, SEXP categorical_posSEXP, SEXP weightsSEXP, SEXP epsilonSEXP, SEXP target_colsSEXP, SEXP train_listSEXP, SEXP hold_listSEXP, SEXP k_grid_listSEXP, SEXP display_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -100,16 +103,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const List& >::type train_list(train_listSEXP);
     Rcpp::traits::input_parameter< const List& >::type hold_list(hold_listSEXP);
     Rcpp::traits::input_parameter< const List& >::type k_grid_list(k_grid_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_missknn_tune_categorical(numeric_scaled, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, target_cols, train_list, hold_list, k_grid_list));
+    Rcpp::traits::input_parameter< const bool >::type display_progress(display_progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_missknn_tune_categorical(numeric_scaled, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, target_cols, train_list, hold_list, k_grid_list, display_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_missknn_cpp_missknn_impute_numeric_column", (DL_FUNC) &_missknn_cpp_missknn_impute_numeric_column, 17},
-    {"_missknn_cpp_missknn_impute_categorical_column", (DL_FUNC) &_missknn_cpp_missknn_impute_categorical_column, 13},
-    {"_missknn_cpp_missknn_tune_numeric", (DL_FUNC) &_missknn_cpp_missknn_tune_numeric, 13},
-    {"_missknn_cpp_missknn_tune_categorical", (DL_FUNC) &_missknn_cpp_missknn_tune_categorical, 11},
+    {"_missknn_cpp_missknn_impute_numeric_column", (DL_FUNC) &_missknn_cpp_missknn_impute_numeric_column, 18},
+    {"_missknn_cpp_missknn_impute_categorical_column", (DL_FUNC) &_missknn_cpp_missknn_impute_categorical_column, 14},
+    {"_missknn_cpp_missknn_tune_numeric", (DL_FUNC) &_missknn_cpp_missknn_tune_numeric, 14},
+    {"_missknn_cpp_missknn_tune_categorical", (DL_FUNC) &_missknn_cpp_missknn_tune_categorical, 12},
     {NULL, NULL, 0}
 };
 
