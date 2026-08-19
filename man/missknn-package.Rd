@@ -7,6 +7,14 @@
 \description{
 Fast masked KNN imputation for tabular data with support for single and multiple imputation.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://CRAN.R-project.org/package=missknn}
+  \item Report bugs at \url{https://github.com/ielbadisy/missknn/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Imad El Badisy \email{elbadisyimad@gmail.com}
 

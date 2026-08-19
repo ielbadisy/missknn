@@ -361,7 +361,8 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
         stochastic,
         meta$epsilon,
         meta$ridge,
-        col_reg_neighbors
+        col_reg_neighbors,
+        isTRUE(meta$progress)
       )
       working$original[[target]][receivers] <- fills
       working$numeric_raw[receivers, meta$numeric_pos[target]] <- fills
@@ -385,7 +386,8 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
         meta$k_per_col[target],
         meta$aggregation,
         stochastic,
-        meta$epsilon
+        meta$epsilon,
+        isTRUE(meta$progress)
       )
       fills <- vapply(codes, missknn_decode_categorical, character(1), meta = meta, target = target)
       working$original[[target]][receivers] <- fills
@@ -502,7 +504,8 @@ missknn_tune_all <- function(dt, meta) {
     res <- cpp_missknn_tune_numeric(
       meta$numeric$scaled_matrix, meta$numeric$raw_matrix, meta$categorical$matrix,
       meta$type_codes, meta$numeric_pos, meta$categorical_pos, meta$weights,
-      meta$epsilon, meta$ridge, num_targets, num_train, num_hold, num_kgrid
+      meta$epsilon, meta$ridge, num_targets, num_train, num_hold, num_kgrid,
+      isTRUE(meta$progress)
     )
     k_per_col[num_targets] <- res$k
     estimator_per_col[num_targets] <- res$estimator
@@ -513,7 +516,8 @@ missknn_tune_all <- function(dt, meta) {
     res_cat <- cpp_missknn_tune_categorical(
       meta$numeric$scaled_matrix, meta$categorical$matrix,
       meta$type_codes, meta$numeric_pos, meta$categorical_pos, meta$weights,
-      meta$epsilon, cat_targets, cat_train, cat_hold, cat_kgrid
+      meta$epsilon, cat_targets, cat_train, cat_hold, cat_kgrid,
+      isTRUE(meta$progress)
     )
     k_per_col[cat_targets] <- res_cat$k
     is_global_col[cat_targets] <- res_cat$is_global
@@ -524,7 +528,7 @@ missknn_tune_all <- function(dt, meta) {
 
 missknn_make_meta <- function(dt, k, scale, weights, add_indicator, seed,
                                numeric_estimator = "regression", ridge = 1e-4,
-                               donor_cap = 2000L) {
+                               donor_cap = 2000L, progress = FALSE) {
   types <- missknn_detect_types(dt)
   reg_neighbors <- max(4L * as.integer(k), 30L)
   numeric_prep <- missknn_prepare_numeric(dt, types$numeric_idx, scale = scale)
@@ -562,7 +566,8 @@ missknn_make_meta <- function(dt, k, scale, weights, add_indicator, seed,
     epsilon = 1e-08,
     seed = seed,
     original = dt,
-    current_donor_index = integer(0)
+    current_donor_index = integer(0),
+    progress = isTRUE(progress)
   )
 
   tuned <- missknn_tune_all(dt, meta)
