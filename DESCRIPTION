@@ -6,7 +6,7 @@ Author: Imad EL BADISY [aut, cre]
 Maintainer: Imad EL BADISY <elbadisyimad@gmail.com>
 Authors@R: person("Imad", "EL BADISY", email = "elbadisyimad@gmail.com", role = c("aut", "cre"))
 Description: Fast masked KNN imputation for tabular data with support for single and multiple imputation.
-URL: https://github.com/ielbadisy/missknn, https://CRAN.R-project.org/package=missknn
+URL: https://CRAN.R-project.org/package=missknn
 BugReports: https://github.com/ielbadisy/missknn/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
