@@ -6,7 +6,13 @@
 
 ## Installation
 
-Install the development version from GitHub with:
+Install the released version from CRAN with:
+
+```r
+install.packages("missknn")
+```
+
+Or install the development version from GitHub with:
 
 ```r
 install.packages("remotes")
@@ -204,3 +210,24 @@ hours at n = 100,000; `VIM::kNN`'s distance search is similarly infeasible past 
 rows. `missknn`'s capped-donor masked-KNN search stays close to linear in `n` and keeps running
 in well under a second even at n = 100,000. `missRanger` also scales to n = 100,000 but at
 substantially higher runtime.
+
+## Citation
+
+```r
+citation("missknn")
+#> To cite package 'missknn' in publications use:
+#>
+#>   El Badisy I (2026). _missknn: Fast Masked K-Nearest Neighbor
+#>   Imputation_. R package version 1.1.2,
+#>   <https://CRAN.R-project.org/package=missknn>.
+#>
+#> A BibTeX entry for LaTeX users is
+#>
+#>   @Manual{,
+#>     title = {missknn: Fast Masked K-Nearest Neighbor Imputation},
+#>     author = {Imad {El Badisy}},
+#>     year = {2026},
+#>     note = {R package version 1.1.2},
+#>     url = {https://CRAN.R-project.org/package=missknn},
+#>   }
+```
