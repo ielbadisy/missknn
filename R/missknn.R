@@ -105,7 +105,11 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                              donor_cap = donor_cap, progress = use_progress)
 
   run_one <- function(r) {
-    working <- data.table::copy(dt)
+    # dt is a plain data.frame (missknn_validate_input); ordinary copy-on-modify
+    # semantics protect it here, unlike data.table's by-reference `$<-`/`[[<-`,
+    # which required an explicit deep copy() before this loop could safely
+    # mutate `working` across sequential/forked iterations.
+    working <- dt
     for (iter in seq_len(max_iter)) {
       working <- missknn_single_pass(working, meta, stochastic = m > 1L)
     }

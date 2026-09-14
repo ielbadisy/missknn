@@ -62,8 +62,7 @@ missknn_validate_input <- function(data) {
     stop("`data` must be a data.frame or matrix.", call. = FALSE)
   }
 
-  dt <- data.table::as.data.table(data)
-  data.table::copy(dt)
+  as.data.frame(data)
 }
 
 missknn_detect_types <- function(dt) {
@@ -474,6 +473,9 @@ missknn_restore_types <- function(dt, meta) {
       }
     }
   }
+  # Kept as data.table (not migrated to basetable) deliberately: complete()'s
+  # return class is documented by the Bioinformatics submission and frozen
+  # until the first revision round (see TODO-code.md).
   data.table::as.data.table(out)
 }
 
