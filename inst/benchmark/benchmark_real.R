@@ -72,7 +72,7 @@ prep_dataset <- function(data, factor_cols = character(0)) {
   data
 }
 
-run_dataset <- function(name, truth, prop = 0.2, seed = 1L, run_missforest = TRUE, run_vim = TRUE) {
+run_dataset <- function(name, truth, prop = 0.3, seed = 1L, run_missforest = TRUE, run_vim = TRUE) {
   split <- make_split(truth)
   numeric_cols <- split$numeric_cols
   factor_cols <- split$factor_cols
@@ -208,7 +208,7 @@ ggsave(file.path(out_dir, "real_data_nrmse_plot.png"), accuracy_plot, width = 9,
 table_md <- knitr::kable(
   transform(results, runtime_sec = round(runtime_sec, 4), nrmse = round(nrmse, 4), pfc = round(pfc, 4)),
   format = "markdown",
-  caption = "Runtime, NRMSE, and PFC on real biomedical datasets (20% MCAR)"
+  caption = "Runtime, NRMSE, and PFC on real biomedical datasets (30% MCAR)"
 )
 
 bign_md <- knitr::kable(
@@ -227,7 +227,7 @@ report <- c(
   "Metrics follow Stekhoven & Buhlmann (2012): NRMSE for numeric variables",
   "and PFC (proportion falsely classified) for categorical variables, both",
   "pooled across every artificially-masked entry of that type rather than",
-  "averaged per column first. 20% MCAR imposed on complete-case ground",
+  "averaged per column first. 30% MCAR imposed on complete-case ground",
   "truth for each dataset.",
   "",
   "## Dataset selection",
