@@ -69,13 +69,16 @@
 #' `missknn()` is an imputer only: it returns completed data. Analysis and
 #' pooling of multiply imputed data (fitting a model on each completed data
 #' set and combining the fits with Rubin's rules) are left to dedicated
-#' packages such as `mimar`, whose `pool()` takes the list of fits.
+#' packages such as `mimar` (for example `mimar::pool_lm()` on a list of
+#' `lm()` fits). Tabular handling (input coercion, column classes, type
+#' restoration) uses the `basetable` package. Only `NA` cells are imputed.
 #'
 #' @return With `m = 1`, a completed `data.frame` with the same columns and
 #'   column types as `data` (plus `<name>_missing` indicator columns when
 #'   `add_indicator = TRUE`). With `m >= 2`, a list of `m` such data frames
 #'   with class `c("mimar_mi", "list")`. Either carries a `"tuning"`
-#'   attribute: a data frame with one row per variable giving the tuned number
+#'   attribute: a data frame with one row per variable giving its number of
+#'   `missing` values, the tuned number
 #'   of donors `k`, the `estimator` (`"regression"`, `"mean"`, or `"vote"` for
 #'   categorical variables) and whether the variable was filled from its
 #'   global mean or mode (`global`, no neighbor signal found).
@@ -121,7 +124,7 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                              donor_cap = donor_cap, progress = use_progress)
 
   run_one <- function(r) {
-    # dt is a plain data.frame, so copy-on-modify keeps it intact across runs.
+    # dt is a basetable (a data.frame), so copy-on-modify keeps it intact across runs.
     working <- dt
     for (iter in seq_len(max_iter)) {
       working <- missknn_single_pass(working, meta, stochastic = m > 1L)
@@ -137,6 +140,7 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
 
   tuning <- data.frame(
     variable = names(dt),
+    missing = as.integer(meta$missing),
     k = as.integer(meta$k_per_col),
     estimator = ifelse(meta$classes == "numeric", meta$estimator_per_col, "vote"),
     global = as.logical(meta$is_global_col),

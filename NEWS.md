@@ -9,6 +9,11 @@
   methods are removed. Analysis and pooling of multiply imputed data belong to
   dedicated packages such as `mimar` (`mimar::pool()`).
 * Completed data are plain data frames; `data.table` is no longer a dependency.
+* Tabular handling (input coercion, column classes, type restoration) now
+  uses `basetable` (>= 1.4.2). Only `NA` cells are imputed: blank strings stay
+  a valid category.
+* The `"tuning"` attribute reports the number of `missing` values per variable.
+* Ordered factors are restored as ordered factors.
 
 # missknn 1.1.2
 

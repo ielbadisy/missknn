@@ -76,3 +76,35 @@ test_that("tuning attribute reports one row per variable", {
   expect_true(all(tu$estimator[c(3, 4, 5)] == "vote"))
   expect_type(tu$global, "logical")
 })
+
+test_that("ordered factors and matrices are handled; tuning reports missing counts", {
+  set.seed(3)
+  d <- data.frame(
+    x = c(1, NA, 3, 4, 5, 6, 7, NA),
+    o = factor(c("lo", "hi", NA, "lo", "mid", "hi", "lo", "mid"),
+               levels = c("lo", "mid", "hi"), ordered = TRUE)
+  )
+  out <- missknn(d, k = 2, seed = 1)
+  expect_true(is.ordered(out$o))
+  expect_identical(levels(out$o), c("lo", "mid", "hi"))
+  expect_false(anyNA(out))
+  expect_identical(class(out), "data.frame")
+  expect_identical(attr(out, "tuning")$missing, c(2L, 1L))
+
+  mx <- matrix(c(1, NA, 3, 4, 5, 6, 2, 3, NA, 5, 6, 7), ncol = 2)
+  outm <- missknn(mx, k = 2, seed = 1)
+  expect_identical(names(outm), c("V1", "V2"))
+  expect_false(anyNA(outm))
+})
+
+test_that("blank strings are a category, not missing", {
+  d <- data.frame(
+    x = c(1, 2, NA, 4, 5, 6),
+    s = c("u", "", NA, "u", "", "v"),
+    stringsAsFactors = FALSE
+  )
+  out <- missknn(d, k = 2, seed = 1, add_indicator = TRUE)
+  expect_identical(attr(out, "tuning")$missing, c(1L, 1L))
+  expect_identical(out$s[c(1, 2, 4, 5, 6)], d$s[c(1, 2, 4, 5, 6)])
+  expect_identical(out$s_missing, c(0L, 0L, 1L, 0L, 0L, 0L))
+})

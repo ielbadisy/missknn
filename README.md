@@ -29,7 +29,7 @@ It is fast by design:
   mean/mode, skipping neighbor search entirely
 - a `donor_cap` bounds the neighbor-search candidate pool so cost stays roughly linear in `n`
   instead of quadratic, which matters at large `n`
-- no tabular framework dependency: input and output are plain data frames
+- `basetable` backend for tabular handling; input is a data frame or matrix, output is plain data frames
 - multiple imputation (`m > 1`) can run multicore by default on Unix-like systems via `parallel::mclapply`
 - within a single imputation, the per-column holdout `k`/estimator tuning and the deterministic
   (non-stochastic) neighbor search are parallelized across columns/receivers with `RcppParallel`,

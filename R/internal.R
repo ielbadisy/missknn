@@ -62,7 +62,7 @@ missknn_validate_input <- function(data) {
     stop("`data` must be a data.frame or matrix.", call. = FALSE)
   }
 
-  as.data.frame(data)
+  basetable::as_basetable(data)
 }
 
 missknn_detect_types <- function(dt) {
@@ -254,7 +254,7 @@ missknn_aggregate_single <- function(target, donor_rows, distances, working, met
     return(missknn_global_fill(target, meta))
   }
 
-  donor_values <- working$original[donor_rows, target]
+  donor_values <- working$original[[target]][donor_rows]
   d <- distances[match(donor_rows, meta$current_donor_index)]
   if (meta$aggregation == "uniform") {
     w <- rep(1, length(d))
@@ -300,7 +300,7 @@ missknn_sample_donor <- function(target, donor_rows, distances, working, meta) {
   }
 
   pick <- sample(donor_rows, size = 1L, prob = probs)
-  working$original[pick, target]
+  working$original[[target]][pick]
 }
 
 missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
@@ -308,7 +308,7 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
   # time `working$*[...] <-` writes into them, so no explicit copy is needed
   # up front; `meta`'s originals are never mutated in place.
   working <- list(
-    original = as.data.frame(dt, stringsAsFactors = FALSE),
+    original = dt,
     numeric_scaled = meta$numeric$scaled_matrix,
     numeric_raw = meta$numeric$raw_matrix,
     categorical = meta$categorical$matrix
@@ -457,21 +457,19 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
 }
 
 missknn_restore_types <- function(dt, meta) {
-  out <- as.data.frame(dt, stringsAsFactors = FALSE)
-  for (j in seq_along(meta$classes)) {
-    if (meta$classes[j] == "numeric") {
-      out[[j]] <- as.numeric(out[[j]])
-    } else {
-      lev <- meta$categorical$levels[[meta$categorical_pos[j]]]
-      vals <- as.character(out[[j]])
-      if (grepl("factor", meta$original_classes[j], fixed = TRUE)) {
-        out[[j]] <- factor(vals, levels = lev)
-      } else if (grepl("logical", meta$original_classes[j], fixed = TRUE)) {
-        out[[j]] <- as.logical(vals)
-      } else {
-        out[[j]] <- vals
-      }
-    }
+  out <- dt
+  if (length(meta$numeric_idx)) {
+    out <- basetable::convertcols(out, meta$names[meta$numeric_idx], as.numeric)
+  }
+  for (j in meta$categorical_idx) {
+    lev <- meta$categorical$levels[[meta$categorical_pos[j]]]
+    vals <- as.character(out[[j]])
+    out[[j]] <- switch(meta$original_classes[j],
+      factor = factor(vals, levels = lev),
+      ordered = factor(vals, levels = lev, ordered = TRUE),
+      logical = as.logical(vals),
+      vals
+    )
   }
   out
 }
@@ -608,7 +606,10 @@ missknn_make_meta <- function(dt, k, scale, weights, add_indicator, seed,
   meta <- list(
     classes = types$classes,
     type_codes = ifelse(types$classes == "numeric", 1L, 2L),
-    original_classes = vapply(dt, function(x) paste(class(x), collapse = "/"), character(1)),
+    original_classes = stats::setNames(basetable::classes(dt)$class, names(dt)),
+    # Only true NA cells are imputed; blank strings are a valid category, so
+    # basetable::missingness() (which counts blanks as missing) is not used.
+    missing = vapply(dt, function(x) sum(is.na(x)), integer(1)),
     names = types$names,
     numeric_idx = types$numeric_idx,
     categorical_idx = types$categorical_idx,
@@ -641,11 +642,11 @@ missknn_make_meta <- function(dt, k, scale, weights, add_indicator, seed,
 
 missknn_finalize <- function(completed, original, meta, add_indicator) {
   out <- missknn_restore_types(completed, meta)
-  if (isTRUE(add_indicator)) {
-    miss_cols <- names(original)[vapply(original, function(x) any(is.na(x)), logical(1))]
+  miss_cols <- meta$names[meta$missing > 0]
+  if (isTRUE(add_indicator) && length(miss_cols)) {
     for (nm in miss_cols) {
       out[[paste0(nm, "_missing")]] <- as.integer(is.na(original[[nm]]))
     }
   }
-  out
+  as.data.frame(out)
 }
