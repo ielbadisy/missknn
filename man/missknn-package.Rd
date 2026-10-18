@@ -5,7 +5,7 @@
 \alias{missknn-package}
 \title{missknn: Fast Masked K-Nearest Neighbor Imputation}
 \description{
-Fast masked KNN imputation for tabular data with support for single and multiple imputation.
+Fast masked k-nearest neighbor imputation for mixed-type tabular data. Distances are computed only on the variables jointly observed by the receiver and the donor, and missing values are filled by local regression (numeric) or weighted vote (categorical) over the nearest donors. Returns completed data for single imputation or a list of completed data sets for multiple imputation.
 }
 \seealso{
 Useful links:
