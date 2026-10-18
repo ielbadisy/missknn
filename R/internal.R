@@ -473,10 +473,7 @@ missknn_restore_types <- function(dt, meta) {
       }
     }
   }
-  # Kept as data.table (not migrated to basetable) deliberately: complete()'s
-  # return class is documented by the Bioinformatics submission and frozen
-  # until the first revision round (see TODO-code.md).
-  data.table::as.data.table(out)
+  out
 }
 
 missknn_candidate_k <- function(n_train, k_default) {

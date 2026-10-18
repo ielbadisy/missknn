@@ -66,7 +66,19 @@
 #' donors. Multiple imputation samples a donor from the same `k` nearest
 #' donors using normalized inverse-distance probabilities.
 #'
-#' @return A `missknn` object.
+#' `missknn()` is an imputer only: it returns completed data. Analysis and
+#' pooling of multiply imputed data (fitting a model on each completed data
+#' set and combining the fits with Rubin's rules) are left to dedicated
+#' packages such as `mimar`, whose `pool()` takes the list of fits.
+#'
+#' @return With `m = 1`, a completed `data.frame` with the same columns and
+#'   column types as `data` (plus `<name>_missing` indicator columns when
+#'   `add_indicator = TRUE`). With `m >= 2`, a list of `m` such data frames
+#'   with class `c("mimar_mi", "list")`. Either carries a `"tuning"`
+#'   attribute: a data frame with one row per variable giving the tuned number
+#'   of donors `k`, the `estimator` (`"regression"`, `"mean"`, or `"vote"` for
+#'   categorical variables) and whether the variable was filled from its
+#'   global mean or mode (`global`, no neighbor signal found).
 #' @examples
 #' set.seed(1)
 #' x <- data.frame(
@@ -74,8 +86,12 @@
 #'   b = c(2, NA, 3, 4, 6),
 #'   g = factor(c("x", "x", "y", NA, "y"))
 #' )
-#' imp <- missknn(x, k = 2, m = 1)
-#' complete(imp)
+#' missknn(x, k = 2)
+#'
+#' # multiple imputation: fit on each completed data set
+#' imps <- missknn(x, k = 2, m = 3, seed = 1, parallel_cores = 1L)
+#' fits <- lapply(imps, function(d) lm(a ~ b, data = d))
+#' sapply(fits, coef)
 #' @export
 missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                     seed = NULL, weights = c("distance", "uniform"),
@@ -105,10 +121,7 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                              donor_cap = donor_cap, progress = use_progress)
 
   run_one <- function(r) {
-    # dt is a plain data.frame (missknn_validate_input); ordinary copy-on-modify
-    # semantics protect it here, unlike data.table's by-reference `$<-`/`[[<-`,
-    # which required an explicit deep copy() before this loop could safely
-    # mutate `working` across sequential/forked iterations.
+    # dt is a plain data.frame, so copy-on-modify keeps it intact across runs.
     working <- dt
     for (iter in seq_len(max_iter)) {
       working <- missknn_single_pass(working, meta, stochastic = m > 1L)
@@ -122,20 +135,14 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
     completed_sets <- lapply(seq_len(m), run_one)
   }
 
-  out <- list(
-    call = match.call(),
-    data = dt,
-    completed = if (m == 1L) completed_sets[[1]] else completed_sets,
-    imputations = completed_sets,
-    k = as.integer(k),
-    m = as.integer(m),
-    scale = scale,
-    add_indicator = add_indicator,
-    weights = weights,
-    max_iter = as.integer(max_iter),
-    seed = seed,
-    meta = meta
+  tuning <- data.frame(
+    variable = names(dt),
+    k = as.integer(meta$k_per_col),
+    estimator = ifelse(meta$classes == "numeric", meta$estimator_per_col, "vote"),
+    global = as.logical(meta$is_global_col),
+    stringsAsFactors = FALSE
   )
-  class(out) <- "missknn"
+  out <- if (m == 1L) completed_sets[[1L]] else structure(completed_sets, class = c("mimar_mi", "list"))
+  attr(out, "tuning") <- tuning
   out
 }
