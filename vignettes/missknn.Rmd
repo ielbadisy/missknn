@@ -59,11 +59,11 @@ length(imps)
 
 The result is a list of `m` completed data frames (class `mimar_mi`). `missknn` is an imputer
 only: fit the analysis model on each completed data set, then combine the fits with Rubin's
-rules, for example with `mimar::pool()`:
+rules, for example with `mimar::pool_lm()`:
 
 ```{r, eval = FALSE}
 fits <- lapply(imps, function(d) lm(a ~ b + g, data = d))
-mimar::pool(fits)
+mimar::pool_lm(fits)
 ```
 
 ## Per-column adaptive tuning

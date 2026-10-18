@@ -139,7 +139,7 @@ Returns completed data directly:
 - `m >= 2`: a list of `m` completed data frames with class `c("mimar_mi", "list")`.
 
 `missknn` is an imputer only. Fit the analysis model on each completed data set and pool the
-fits with Rubin's rules using a dedicated package such as `mimar` (`mimar::pool()`).
+fits with Rubin's rules using a dedicated package such as `mimar` (`mimar::pool_lm()`).
 
 ## Example
 
@@ -158,7 +158,7 @@ missknn(x, k = 2)
 imps <- missknn(x, k = 2, m = 5, seed = 1)
 imps[[2]]
 fits <- lapply(imps, function(d) lm(a ~ b, data = d))
-mimar::pool(fits)
+mimar::pool_lm(fits)
 ```
 
 ## Execution time vs. sample size

@@ -7,7 +7,7 @@
   `c("mimar_mi", "list")` when `m >= 2`.
 * `complete()`, the `missknn` object class and its `print()`/`summary()`
   methods are removed. Analysis and pooling of multiply imputed data belong to
-  dedicated packages such as `mimar` (`mimar::pool()`).
+  dedicated packages such as `mimar` (`mimar::pool_lm()`).
 * Completed data are plain data frames; `data.table` is no longer a dependency.
 * Tabular handling (input coercion, column classes, type restoration) now
   uses `basetable` (>= 1.4.2). Only `NA` cells are imputed: blank strings stay
