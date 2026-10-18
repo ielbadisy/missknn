@@ -82,7 +82,7 @@ run_dataset <- function(name, truth, prop = 0.3, seed = 1L, run_missforest = TRU
   for (fc in factor_cols) miss[[fc]] <- factor(miss[[fc]], levels = levels(truth[[fc]]))
   methods <- list()
 
-  t_kn <- system.time(kn <- missknn::complete(missknn(miss, k = 5L, m = 1L, seed = 1L)))[["elapsed"]]
+  t_kn <- system.time(kn <- missknn(miss, k = 5L, m = 1L, seed = 1L))[["elapsed"]]
   methods[["missknn"]] <- list(time = t_kn, imp = kn)
 
   if (run_missforest) {

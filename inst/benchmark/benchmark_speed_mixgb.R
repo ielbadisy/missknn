@@ -46,7 +46,7 @@ ampute <- function(df, prop = 0.2, seed) {
 
 time_one <- function(miss, seed) {
   bench::mark(
-    missknn = complete(missknn(miss, k = 5L, m = 1L, seed = seed, parallel_cores = 1L)),
+    missknn = missknn(miss, k = 5L, m = 1L, seed = seed, parallel_cores = 1L),
     missForest = suppressWarnings(missForest::missForest(miss, verbose = FALSE, parallelize = "no")$ximp),
     missRanger = suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100, num.threads = 1)),
     mixgb = suppressMessages(suppressWarnings(

@@ -29,7 +29,7 @@ It is fast by design:
   mean/mode, skipping neighbor search entirely
 - a `donor_cap` bounds the neighbor-search candidate pool so cost stays roughly linear in `n`
   instead of quadratic, which matters at large `n`
-- `data.table` is used for lightweight tabular orchestration
+- no tabular framework dependency: input and output are plain data frames
 - multiple imputation (`m > 1`) can run multicore by default on Unix-like systems via `parallel::mclapply`
 - within a single imputation, the per-column holdout `k`/estimator tuning and the deterministic
   (non-stochastic) neighbor search are parallelized across columns/receivers with `RcppParallel`,
@@ -40,7 +40,7 @@ It supports:
 - single imputation
 - multiple imputation
 - numeric and mixed tabular data
-- `data.table`-friendly workflows
+- an imputer-only interface: completed data in, analysis and pooling left to tools such as `mimar`
 
 ## About
 
@@ -120,7 +120,7 @@ Fits masked KNN imputation and returns a `missknn` object.
 | `k` | Number of nearest donors used per target column. |
 | `m` | Number of completed datasets. `m = 1` is single (deterministic) imputation; `m > 1` is multiple (stochastic donor-sampling) imputation. |
 | `scale` | Standardize numeric variables before computing distances. |
-| `add_indicator` | Append `TRUE`/`FALSE` missingness-indicator columns to the completed output. |
+| `add_indicator` | Append 0/1 integer missingness-indicator columns (`<name>_missing`) to the completed output. |
 | `seed` | Integer seed for reproducible multiple imputation. |
 | `weights` | `"distance"` (inverse-distance weighted aggregation) or `"uniform"` (equal weights) over the `k` donors. |
 | `numeric_estimator` | `"regression"` fits a distance-weighted local linear regression of the target on the receiver's observed numeric predictors over the `k` donors, falling back to the weighted mean when the local design is degenerate; `"mean"` always uses the weighted mean. |
@@ -128,29 +128,18 @@ Fits masked KNN imputation and returns a `missknn` object.
 | `donor_cap` | Caps the donor pool searched per target column, subsampling once per column when exceeded, so search cost stays roughly linear in `n`. Does not affect the global mean/mode fallback, which always uses every donor. |
 | `max_iter` | Number of single-pass refinement iterations over the whole dataset. |
 | `parallel_cores` | Cores used across the `m` completed datasets when `m > 1` (via `parallel::mclapply`, Unix-like only). Defaults to `detectCores() - 1`. Independent of the `RcppParallel` threading used within a single imputation (see [Parallel computing](#parallel-computing)). |
-| `progress` | Show a live `cli` progress bar per tuning stage and per imputed column (see [Progress reporting](#progress-reporting)). Default `FALSE`. |
+| `progress` | Show a live console progress bar per tuning stage and per imputed column (see [Progress reporting](#progress-reporting)). Default `FALSE`. |
 
 Columns with no locally exploitable signal are detected during fitting and filled from the
 global mean/mode directly, without a neighbor search.
 
-Returns a `missknn` object: a list with `data` (input as a `data.table`), `completed` (one
-completed data.table, or a list of `m` when `m > 1`), `imputations` (always a list of `m`),
-plus the arguments used to fit (`k`, `m`, `scale`, `weights`, etc.) and internal `meta`.
+Returns completed data directly:
 
-### `complete(object, action = c("all", "single"), index = 1L, ...)`
+- `m = 1`: a `data.frame` with the same columns and column types as the input.
+- `m >= 2`: a list of `m` completed data frames with class `c("mimar_mi", "list")`.
 
-S3 generic (`complete.missknn`) that extracts completed data from a `missknn` object.
-
-- `action = "all"` (default): returns every completed dataset (a single data.table when `m = 1`,
-  a list of `m` data.tables when `m > 1`).
-- `action = "single"`: returns one completed data.table, selected by `index` (ignored when
-  `m = 1`, since there is only one).
-
-### `print(x)` / `summary(object)`
-
-`print.missknn` reports `n`, `p`, `k`, `m`, `scale`, and `add_indicator`. `summary.missknn`
-additionally reports per-variable and total missing counts (`missing_by_variable`,
-`missing_total`) and has its own `print.summary.missknn` method.
+`missknn` is an imputer only. Fit the analysis model on each completed data set and pool the
+fits with Rubin's rules using a dedicated package such as `mimar` (`mimar::pool()`).
 
 ## Example
 
@@ -163,14 +152,13 @@ x <- data.frame(
   g = factor(c("x", "x", "y", NA))
 )
 
-imp <- missknn(x, k = 2, m = 1)
-imp
-summary(imp)
-complete(imp)
+missknn(x, k = 2)
 
-# multiple imputation
-mi <- missknn(x, k = 2, m = 5, seed = 1)
-complete(mi, action = "single", index = 2)
+# multiple imputation: a list of 5 completed data frames
+imps <- missknn(x, k = 2, m = 5, seed = 1)
+imps[[2]]
+fits <- lapply(imps, function(d) lm(a ~ b, data = d))
+mimar::pool(fits)
 ```
 
 ## Execution time vs. sample size

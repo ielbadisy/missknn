@@ -35,23 +35,16 @@ x <- data.frame(
   g = factor(c("x", "x", "y", NA, "y"))
 )
 
-imp <- missknn(x, k = 2, m = 1)
-missknn::complete(imp)
+missknn(x, k = 2)
 ```
+
+With `m = 1` (the default) `missknn()` returns the completed `data.frame` directly, with the
+same columns and column types as the input.
 
 `missknn()` detects numeric and categorical (factor/character/logical) columns automatically, and
 imputes both from the same masked-distance neighborhood: numeric targets get a distance-weighted
 mean or a local regression fit (whichever validates better for that column), categorical targets
 get a distance-weighted majority vote.
-
-### A note on `complete()`
-
-`complete()` is a common generic name - packages like `mimar` or `tidyr` may also define one. If
-another attached package's `complete()` shadows `missknn`'s, call it explicitly:
-
-```{r, eval = FALSE}
-missknn::complete(imp)
-```
 
 ## Multiple imputation
 
@@ -59,8 +52,18 @@ Setting `m > 1` draws `m` completed datasets by sampling (rather than averaging)
 receiver's nearest donors, using the same distance model throughout:
 
 ```{r}
-imp_mi <- missknn(x, k = 2, m = 5, seed = 1)
-length(missknn::complete(imp_mi))
+imps <- missknn(x, k = 2, m = 5, seed = 1, parallel_cores = 1L)
+class(imps)
+length(imps)
+```
+
+The result is a list of `m` completed data frames (class `mimar_mi`). `missknn` is an imputer
+only: fit the analysis model on each completed data set, then combine the fits with Rubin's
+rules, for example with `mimar::pool()`:
+
+```{r, eval = FALSE}
+fits <- lapply(imps, function(d) lm(a ~ b + g, data = d))
+mimar::pool(fits)
 ```
 
 ## Per-column adaptive tuning
@@ -74,12 +77,10 @@ evaluation per column to choose:
 - whether the column has any locally exploitable signal at all -- if not, it is filled directly
   from the global mean/mode, skipping neighbor search entirely for that column.
 
-This is inspected via the fitted object's `meta`:
+The choices are returned in the `"tuning"` attribute of the result:
 
 ```{r}
-imp$meta$k_per_col
-imp$meta$estimator_per_col
-imp$meta$is_global_col
+attr(missknn(x, k = 2), "tuning")
 ```
 
 ## Why this matters for larger data

@@ -47,7 +47,7 @@ miss <- amputate(truth, prop = 0.2, seed = 100L + %d)
 
 method <- '%s'
 call_fn <- switch(method,
-  missknn = function() complete(missknn(miss, k = 5L, m = 1L, seed = 1L)),
+  missknn = function() missknn(miss, k = 5L, m = 1L, seed = 1L),
   missForest = function() suppressWarnings(missForest::missForest(miss, verbose = FALSE)$ximp),
   missRanger = function() suppressWarnings(missRanger::missRanger(miss, verbose = 0, num.trees = 100, num.threads = 1)),
   `VIM::kNN` = function() suppressWarnings(as.data.frame(VIM::kNN(miss, k = 5L, imp_var = FALSE)))
