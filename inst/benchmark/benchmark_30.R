@@ -1,3 +1,6 @@
+# Every method is timed on one thread: missRanger via num.threads = 1, missknn
+# via RcppParallel's thread count (inherited by the per-run subprocesses).
+Sys.setenv(RCPP_PARALLEL_NUM_THREADS = "1", OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1")
 set.seed(20260705)
 
 suppressPackageStartupMessages({

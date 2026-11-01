@@ -1,3 +1,6 @@
+# Every method is timed on one thread: missRanger via num.threads = 1, missknn
+# via RcppParallel's thread count (inherited by the per-run subprocesses).
+Sys.setenv(RCPP_PARALLEL_NUM_THREADS = "1", OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1")
 set.seed(20260705)
 
 suppressPackageStartupMessages({
@@ -44,16 +47,10 @@ pooled_metrics <- function(truth, imp, miss, numeric_cols, factor_cols) {
 ## ---- Dataset selection ----
 ## Four biomedical/clinical datasets from `biostatlab`, retained from a
 ## larger pre-specified panel (n >= 250, p >= 8, n <= 6000) to keep the
-## benchmark to a size appropriate for an Application Note, while still
-## spanning a range of outcomes: heart_failure (missknn wins outright on
-## speed and accuracy), crc_mondaca2020 (missknn wins on speed and numeric
-## accuracy, loses on categorical accuracy), arthritis (missknn wins on
-## speed only, loses on accuracy), and metabric_clinical (missForest fails
-## outright on a rare categorical level; missknn and missRanger both
-## complete, with missRanger slightly more accurate). `diabetes_prediction`
-## (n = 100,000) is kept separately as a real-data scaling point alongside
-## the synthetic scaling study, since it exceeds the n <= 6000 cutoff for
-## the main missForest comparison.
+## benchmark to a size appropriate for an Application Note: heart_failure,
+## crc_mondaca2020, arthritis and metabric_clinical. The real-data
+## scaling point (diabetes_prediction, n = 100,000) is run separately by
+## benchmark_real_bign.R, since every method takes far longer there.
 
 col_mse <- function(truth, imp, cols) {
   if (!length(cols)) return(NA_real_)
@@ -67,6 +64,16 @@ make_split <- function(truth) {
 
 prep_dataset <- function(data, factor_cols = character(0)) {
   data <- as.data.frame(data)
+  # Some sources code missing categories as empty strings; treat them as
+  # missing so they are dropped with the other incomplete rows rather than
+  # kept as a spurious "" level.
+  for (j in names(data)) {
+    if (is.character(data[[j]]) || is.factor(data[[j]])) {
+      v <- as.character(data[[j]])
+      v[!is.na(v) & trimws(v) == ""] <- NA
+      data[[j]] <- if (is.factor(data[[j]])) factor(v) else v
+    }
+  }
   data <- data[stats::complete.cases(data), ]
   for (fc in factor_cols) data[[fc]] <- factor(data[[fc]])
   data
@@ -86,10 +93,7 @@ run_dataset <- function(name, truth, prop = 0.3, seed = 1L, run_missforest = TRU
   methods[["missknn"]] <- list(time = t_kn, imp = kn)
 
   if (run_missforest) {
-    # missForest's internal per-level OOB accounting can fail outright if a
-    # rare categorical level happens to be entirely masked by the amputation
-    # draw (documented for the METABRIC subset below); caught rather than
-    # worked around, and reported as NA for that dataset/method.
+    # Any failure is caught and reported as NA for that dataset/method.
     rf <- NULL
     rf_time <- tryCatch(
       system.time(rf <- suppressWarnings(missForest::missForest(miss, verbose = FALSE)$ximp))[["elapsed"]],
@@ -169,14 +173,6 @@ results <- do.call(rbind, lapply(datasets, function(ds) {
 
 write.csv(results, file.path(out_dir, "real_data_results.csv"), row.names = FALSE)
 
-## ---- Bonus real-data scaling point: diabetes_prediction (n = 100,000) ----
-## Exceeds the n <= 6000 tractability cutoff for missForest, so run only
-## missknn and VIM::kNN here as a real-data complement to the synthetic
-## scaling study, rather than skip a real n = 100,000 dataset entirely.
-dp <- prep_dataset(biostatlab::diabetes_prediction)
-dp_result <- run_dataset("diabetes_prediction", dp, seed = 32, run_missforest = FALSE, run_vim = FALSE)
-write.csv(dp_result, file.path(out_dir, "real_data_bign_results.csv"), row.names = FALSE)
-
 ## ---- Figures ----
 plot_df <- results
 plot_df$method <- factor(plot_df$method, levels = c("missknn", "missForest", "missRanger", "VIM::kNN"))
@@ -211,16 +207,6 @@ table_md <- knitr::kable(
   caption = "Runtime, NRMSE, and PFC on real biomedical datasets (30% MCAR)"
 )
 
-bign_md <- knitr::kable(
-  transform(
-    dp_result,
-    n = format(n, big.mark = ",", scientific = FALSE, trim = TRUE),
-    runtime_sec = round(runtime_sec, 4), nrmse = round(nrmse, 4), pfc = round(pfc, 4)
-  ),
-  format = "markdown",
-  caption = "diabetes_prediction (n = 100,000): missForest excluded as computationally intractable at this n"
-)
-
 report <- c(
   "# missknn Real-Data Benchmark Report",
   "",
@@ -233,14 +219,11 @@ report <- c(
   "## Dataset selection",
   "",
   "Four biomedical/clinical datasets from `biostatlab`, kept to a size",
-  "appropriate for an Application Note while spanning a range of outcomes:",
-  "`heart_failure` (missknn wins outright), `crc_mondaca2020` (missknn wins",
-  "on speed and numeric accuracy, loses on categorical accuracy),",
-  "`arthritis` (missknn wins on speed only), and `metabric_clinical`",
-  "(missForest fails outright on a rare categorical level; missknn and",
-  "missRanger both complete, missRanger slightly more accurate).",
-  "`diabetes_prediction` (n = 100,000) is reported separately as a real-data",
-  "scaling point.",
+  "appropriate for an Application Note: `heart_failure`, `crc_mondaca2020`,",
+  "`arthritis` and `metabric_clinical`.",
+  "Empty strings in categorical columns are treated as missing before the",
+  "complete-case ground truth is formed. The real-data scaling point",
+  "(`diabetes_prediction`, n = 100,000) is in benchmark_real_bign.R.",
   "",
   "## Figures",
   "",
@@ -251,13 +234,8 @@ report <- c(
   "## Main Results Table",
   "",
   table_md,
-  "",
-  "## Real-Data Scaling Point (n = 100,000)",
-  "",
-  bign_md,
   ""
 )
 
 writeLines(report, file.path(out_dir, "real_data_benchmark_report.md"))
 print(results)
-print(dp_result)

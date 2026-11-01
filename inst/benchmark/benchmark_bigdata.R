@@ -1,3 +1,6 @@
+# Every method is timed on one thread: missRanger via num.threads = 1, missknn
+# via RcppParallel's thread count (inherited by the per-run subprocesses).
+Sys.setenv(RCPP_PARALLEL_NUM_THREADS = "1", OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1")
 suppressPackageStartupMessages({
   library(ggplot2)
   library(knitr)
@@ -21,8 +24,11 @@ suppressPackageStartupMessages({
   library(VIM)
 })
 set.seed(20260705)
-simulate_data <- function(n, p = 5L) {
-  x <- replicate(p, rnorm(n), simplify = FALSE)
+# Equicorrelated Gaussian columns (pairwise correlation 0.5), so that
+# neighbours carry information and accuracy is not capped at mean imputation.
+simulate_data <- function(n, p = 5L, rho = 0.5) {
+  z <- rnorm(n)
+  x <- replicate(p, sqrt(rho) * z + sqrt(1 - rho) * rnorm(n), simplify = FALSE)
   names(x) <- paste0('x', seq_len(p))
   as.data.frame(x)
 }
@@ -65,30 +71,51 @@ err <- nrmse(truth[is.na(miss)], out[is.na(miss)])
 cat(sprintf('%%.10f,%%.10f', as.numeric(timing$median), err))
 "
 
+# Every (n, method) cell is cached under output/bigdata_cells/, so the long
+# runs can be resumed. Fast cells run one at a time; the slow cells
+# (missForest and VIM::kNN beyond n = 5,000, hours each) then run side by side
+# in separate processes (N_CORES, default 1).
+cell_dir <- file.path(out_dir, "bigdata_cells")
+dir.create(cell_dir, recursive = TRUE, showWarnings = FALSE)
+cores <- as.integer(Sys.getenv("N_CORES", "1"))
+
 run_one <- function(n, i, method) {
+  cache <- file.path(cell_dir, sprintf("%s_%d.csv", gsub("[^A-Za-z]", "", method), n))
+  if (file.exists(cache)) {
+    cached <- read.csv(cache, stringsAsFactors = FALSE)
+    if (!"failed" %in% names(cached)) cached$failed <- FALSE
+    if (!"failure" %in% names(cached)) cached$failure <- ""
+    return(cached)
+  }
   code <- sprintf(runner_template, n, i, method)
   script <- tempfile(fileext = ".R")
   writeLines(code, script)
-  out <- system2("Rscript", script, stdout = TRUE, stderr = FALSE)
-  parts <- as.numeric(strsplit(out[length(out)], ",")[[1]])
-  data.frame(n = n, method = method, runtime_sec = parts[1], nrmse = parts[2])
+  out <- tryCatch(system2("Rscript", script, stdout = TRUE, stderr = TRUE),
+                  error = function(e) conditionMessage(e))
+  parts <- suppressWarnings(tryCatch(as.numeric(strsplit(out[length(out)], ",")[[1]]),
+                                     error = function(e) numeric()))
+  failed <- length(parts) < 2L || any(!is.finite(parts[1:2])) ||
+    !is.null(attr(out, "status"))
+  res <- data.frame(n = n, method = method,
+                    runtime_sec = if (failed) NA_real_ else parts[1],
+                    nrmse = if (failed) NA_real_ else parts[2],
+                    failed = failed,
+                    failure = if (failed) paste(out, collapse = " | ") else "")
+  write.csv(res, cache, row.names = FALSE)
+  res
 }
 
 n_grid <- c(1000L, 5000L, 20000L, 100000L)
-run_missforest <- n_grid <= 5000L
-# VIM::kNN's O(n^2) distance search is intractable beyond a few thousand
-# rows, the same tractability cutoff already used for missForest.
-run_vim <- n_grid <= 5000L
+METHODS <- c("missknn", "missRanger", "missForest", "VIM::kNN")
+cells <- expand.grid(i = seq_along(n_grid), method = METHODS, stringsAsFactors = FALSE)
+cells$n <- n_grid[cells$i]
+slow <- cells$method %in% c("missForest", "VIM::kNN") & cells$n > 5000L
 
-results <- list()
-for (i in seq_along(n_grid)) {
-  n <- n_grid[i]
-  methods <- c("missknn", "missRanger", if (run_missforest[i]) "missForest", if (run_vim[i]) "VIM::kNN")
-  for (method in methods) {
-    results[[length(results) + 1L]] <- run_one(n, i, method)
-  }
-  cat(sprintf("n=%d done\n", n))
-}
+run_cells <- function(k) run_one(cells$n[k], cells$i[k], cells$method[k])
+results <- lapply(which(!slow), run_cells)
+if (Sys.getenv("FAST_ONLY") == "1") quit(save = "no")  # cache the fast cells only
+results <- c(results, parallel::mclapply(which(slow), run_cells, mc.cores = cores,
+                                         mc.preschedule = FALSE))
 
 bigdata_df <- do.call(rbind, results)
 bigdata_df$method <- factor(bigdata_df$method, levels = c("missknn", "missForest", "missRanger", "VIM::kNN"))
@@ -122,37 +149,29 @@ write.csv(bigdata_df, file.path(out_dir, "bigdata_results.csv"), row.names = FAL
 
 table_md <- knitr::kable(
   transform(
-    bigdata_df,
+    bigdata_df[, c("n", "method", "runtime_sec", "nrmse")],
     n = format(n, big.mark = ",", scientific = FALSE, trim = TRUE),
-    runtime_sec = round(runtime_sec, 4),
-    nrmse = round(nrmse, 5)
+    runtime_sec = round(runtime_sec, 4), nrmse = round(nrmse, 5)
   ),
   format = "markdown",
   caption = "Runtime and NRMSE by method and sample size (one fresh Rscript process per run)"
 )
+failure_lines <- if (any(bigdata_df$failed)) {
+  c("## Failed cells", "",
+    sprintf("- n = %s, %s: %s", bigdata_df$n[bigdata_df$failed],
+            bigdata_df$method[bigdata_df$failed], bigdata_df$failure[bigdata_df$failed]), "")
+} else c("All method cells completed without recorded failures.", "")
 
 report <- c(
   "# missknn Big-Data Benchmark Report",
   "",
   "Runtime and imputation accuracy (NRMSE) vs. sample size, from n = 1,000",
-  "up to n = 100,000 (5 numeric columns, 20% MCAR per column). Each",
+  "up to n = 100,000 (5 equicorrelated Gaussian columns, rho = 0.5, 20% MCAR per column). Each",
   "(n, method) run executes in its own fresh `Rscript` process, so timings",
   "are not distorted by heap growth accumulated across earlier, larger runs",
-  "in a shared session. `missForest` and `VIM::kNN` are only run up to",
-  "n = 5,000 (per-tree cost and O(n^2) distance search respectively make",
-  "larger n impractical); `missknn` and `missRanger` run across the full",
-  "grid.",
-  "",
-  "## Takeaway",
-  "",
-  "`missForest`'s runtime already becomes impractical at n = 5,000 (over a",
-  "minute) and would take hours at n = 100,000; `VIM::kNN`'s distance search",
-  "is similarly infeasible past a few thousand rows. `missknn`'s",
-  "capped-donor masked-KNN search stays close to linear in n and keeps",
-  "running in well under a second per column set even at n = 100,000, which",
-  "is the practical point of the donor-cap design: search cost does not",
-  "grow with the full donor pool once n exceeds the cap. `missRanger` also",
-  "scales to n = 100,000 but at substantially higher runtime.",
+  "in a shared session. All four methods run across the full grid; the",
+  "slow cells (`missForest` and `VIM::kNN` beyond n = 5,000) ran side by",
+  "side in separate processes, one core each.",
   "",
   "## Figures",
   "",
@@ -163,7 +182,8 @@ report <- c(
   "## Results Table",
   "",
   table_md,
-  ""
+  "",
+  failure_lines
 )
 
 writeLines(report, file.path(out_dir, "bigdata_benchmark_report.md"))

@@ -32,16 +32,16 @@ Table: Runtime, NRMSE, and PFC on bioinformatics datasets (30% MCAR)
 
 |dataset      |method     |   n|   p| runtime_sec|  nrmse|    pfc|
 |:------------|:----------|---:|---:|-----------:|------:|------:|
-|mice_protein |missknn    | 552|  81|       0.680| 0.0957| 0.0129|
-|mice_protein |missForest | 552|  81|     134.095| 0.1040| 0.0113|
-|mice_protein |missRanger | 552|  81|      24.982| 0.1115| 0.0129|
-|mice_protein |VIM::kNN   | 552|  81|      11.653| 0.2583| 0.0194|
-|tcga_luad    |missknn    | 426|  10|       0.017| 0.4803| 0.4123|
-|tcga_luad    |missForest | 426|  10|       3.570| 0.4988| 0.4757|
-|tcga_luad    |missRanger | 426|  10|       1.018| 0.4897| 0.4328|
-|tcga_luad    |VIM::kNN   | 426|  10|       0.553| 0.7502| 0.4478|
-|geo_lung     |missknn    | 107| 104|       0.069| 0.4667| 0.5917|
-|geo_lung     |missForest | 107| 104|      27.437| 0.4217| 0.5083|
-|geo_lung     |missRanger | 107| 104|       6.452| 0.4159| 0.5167|
-|geo_lung     |VIM::kNN   | 107| 104|       2.988| 0.5543| 0.6250|
+|mice_protein |missknn    | 552|  81|       5.891| 0.0957| 0.0129|
+|mice_protein |missForest | 552|  81|     142.273| 0.1040| 0.0113|
+|mice_protein |missRanger | 552|  81|      26.439| 0.1115| 0.0129|
+|mice_protein |VIM::kNN   | 552|  81|      13.134| 0.2583| 0.0194|
+|tcga_luad    |missknn    | 426|  10|       0.067| 0.4803| 0.4123|
+|tcga_luad    |missForest | 426|  10|       2.597| 0.4988| 0.4757|
+|tcga_luad    |missRanger | 426|  10|       0.784| 0.4897| 0.4328|
+|tcga_luad    |VIM::kNN   | 426|  10|       0.494| 0.7502| 0.4478|
+|geo_lung     |missknn    | 107| 104|       0.437| 0.4667| 0.5917|
+|geo_lung     |missForest | 107| 104|      28.816| 0.4217| 0.5083|
+|geo_lung     |missRanger | 107| 104|       6.539| 0.4159| 0.5167|
+|geo_lung     |VIM::kNN   | 107| 104|       3.544| 0.5543| 0.6250|
 

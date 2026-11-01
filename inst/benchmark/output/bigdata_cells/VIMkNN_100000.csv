@@ -1,0 +1,2 @@
+"n","method","runtime_sec","nrmse","failed","failure"
+100000,"VIM::kNN",NA,NA,TRUE,"No result after 38m43s of CPU-bound execution with memory pressure; stopped as infeasible for the 100,000-row setting."
