@@ -1,0 +1,6 @@
+"dataset","bio_index","metric_wins","average_rank"
+"anorexia",4,3,1.375
+"dpb",8,3,1.75
+"birthwt",3,2,1.33333333333333
+"aidsdelay",5,2,2
+"theoph",2,1,2.25

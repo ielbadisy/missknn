@@ -11,8 +11,8 @@ n = 300, p = 6 numeric variables drawn from an equicorrelated Gaussian
 |method     |   nrmse|
 |:----------|-------:|
 |missknn    | 0.82242|
-|missForest | 0.80700|
-|missRanger | 0.81623|
+|missForest | 0.81575|
+|missRanger | 0.81506|
 |VIM::kNN   | 0.88845|
 
 ## Study 2: mixed numeric + categorical data
@@ -22,8 +22,8 @@ of them, 20% MCAR per column.
 
 |method     |   nrmse|    pfc|
 |:----------|-------:|------:|
-|missknn    | 0.85508| 0.2000|
-|missForest | 0.91550| 0.2250|
-|missRanger | 0.82490| 0.2000|
-|VIM::kNN   | 0.95601| 0.2625|
+|missknn    | 0.87621| 0.2000|
+|missForest | 0.90846| 0.2125|
+|missRanger | 0.87486| 0.2125|
+|VIM::kNN   | 0.98222| 0.2000|
 

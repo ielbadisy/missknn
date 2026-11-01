@@ -1,0 +1,10 @@
+"dataset","bio_index","metric_wins","average_rank"
+"anorexia",4,2,2
+"birthwt",3,1,1.66666666666667
+"epilepsy",9,1,1.75
+"theoph",2,1,2
+"phosphate",7,1,2.25
+"dpb",8,1,2.25
+"indometh",1,1,2.5
+"aidsdelay",5,1,2.66666666666667
+"agefat",6,1,2.75

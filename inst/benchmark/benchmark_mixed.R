@@ -1,3 +1,6 @@
+# Every method is timed on one thread: missRanger via num.threads = 1, missknn
+# via RcppParallel's thread count (inherited by the per-run subprocesses).
+Sys.setenv(RCPP_PARALLEL_NUM_THREADS = "1", OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1")
 set.seed(20260705)
 
 suppressPackageStartupMessages({
@@ -53,6 +56,9 @@ simulate_correlated <- function(n = 300, p = 6, rho = 0.6) {
   as.data.frame(z)
 }
 
+# Each study draws its data from its own seed, so its results do not depend
+# on how many random numbers the methods in an earlier study consumed.
+set.seed(20260705)
 truth_cor <- simulate_correlated()
 amp_cor <- mimar::ampute(truth_cor, prop = 0.2, mechanism = "MCAR", target = names(truth_cor), seed = 7)
 miss_cor <- as.data.frame(amp_cor$data)
@@ -64,6 +70,7 @@ correlated_results <- do.call(rbind, lapply(METHODS, function(m) {
 }))
 
 ## ---- Study 2: mixed numeric + categorical data ----------------------------
+set.seed(20260706)
 n <- 400
 x1 <- rnorm(n)
 x2 <- 0.7 * x1 + rnorm(n, sd = 0.7)
