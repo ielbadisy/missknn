@@ -295,14 +295,14 @@ scales to n = 100,000 but at substantially higher runtime.
 
 ``` r
 citation("missknn")
-#> To cite package 'missknn' in publications use:
-#>
+#> To cite missknn in publications, use:
+#> 
 #>   El Badisy I (2026). _missknn: Fast Masked K-Nearest Neighbor
 #>   Imputation_. R package version 1.2.0,
 #>   <https://CRAN.R-project.org/package=missknn>.
-#>
+#> 
 #> A BibTeX entry for LaTeX users is
-#>
+#> 
 #>   @Manual{,
 #>     title = {missknn: Fast Masked K-Nearest Neighbor Imputation},
 #>     author = {Imad {El Badisy}},
