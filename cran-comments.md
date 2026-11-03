@@ -1,35 +1,26 @@
-## Submission
+## Update submission (1.1.2 -> 1.2.0)
 
-This is a resubmission. missknn 1.0.0 is the currently published CRAN version;
-this submission updates to 1.1.2.
+`missknn()` now returns the completed data directly (a data frame, or a list
+of completed data frames when `m >= 2`). The `missknn` object class and
+`complete()` are removed; analysis and pooling are left to dedicated packages
+such as mimar. `data.table` is replaced by `basetable`, only `NA` cells are
+imputed, and ordered factors are kept. An `inst/CITATION` file is added.
+See NEWS.md.
 
-## Changes since the CRAN release (1.0.0)
+## Reverse dependencies
 
-* Added a `progress` argument to `missknn()`, showing a live progress bar
-  over the per-column masked-distance search on large datasets: one bar
-  per tuning stage and per imputed column, updating in place with a
-  percentage and an ETA. Implemented entirely in base R (no new package
-  dependency).
-* Requesting `progress = TRUE` runs the affected column's search on a
-  single thread rather than in parallel (an explicit, documented
-  visible-vs-fast tradeoff); `Rcpp::checkUserInterrupt()` provides Ctrl-C
-  support. Automatically disabled when `m > 1` with `parallel_cores > 1`,
-  since console output from `parallel::mclapply`'s forked worker processes
-  cannot be shown live.
+mimar (Imports) is the only reverse dependency. mimar 1.4.2, now on CRAN,
+handles both the old and the new return value; its checks pass with this
+version.
 
 ## Test environments
 
-* local Ubuntu 24.04, R 4.5.1
+* Local: Ubuntu 24.04, R 4.5.1
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
-* checking compilation flags used ... NOTE
-  Compilation used the following non-portable flag(s): '-mno-omit-leaf-frame-pointer'
-  (this flag comes from the local R toolchain configuration, not from the
-  package's Makevars, and is not expected to appear on CRAN's build servers)
-
-## Downstream dependencies
-
-There are currently no downstream dependencies for this package.
+* "Compilation used the following non-portable flag(s):
+  '-mno-omit-leaf-frame-pointer'". This flag comes from the local Ubuntu R
+  toolchain (`Makeconf`), not from the package's `src/Makevars`.
