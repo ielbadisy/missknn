@@ -8,12 +8,11 @@ truth for each dataset.
 
 ## Dataset selection
 
-Four biomedical/clinical datasets from `biostatlab`, kept to a size
-appropriate for an Application Note: `heart_failure`, `crc_mondaca2020`,
-`arthritis` and `metabric_clinical`.
+Four biomedical/clinical datasets from `biobench` (>= 0.3.0), kept to a
+size appropriate for an Application Note: `heartfailure`, `crcmondaca`,
+`arthritis` (NHANES 2007-2008) and the clinical variables of `metabric`.
 Empty strings in categorical columns are treated as missing before the
-complete-case ground truth is formed. The real-data scaling point
-(`diabetes_prediction`, n = 100,000) is in benchmark_real_bign.R.
+complete-case ground truth is formed.
 
 ## Figures
 

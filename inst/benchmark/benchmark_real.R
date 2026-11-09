@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
   library(missForest)
   library(missRanger)
   library(VIM)
-  library(biostatlab)
+  library(biobench)
   library(missknn)
 })
 
@@ -45,12 +45,11 @@ pooled_metrics <- function(truth, imp, miss, numeric_cols, factor_cols) {
 }
 
 ## ---- Dataset selection ----
-## Four biomedical/clinical datasets from `biostatlab`, retained from a
-## larger pre-specified panel (n >= 250, p >= 8, n <= 6000) to keep the
-## benchmark to a size appropriate for an Application Note: heart_failure,
-## crc_mondaca2020, arthritis and metabric_clinical. The real-data
-## scaling point (diabetes_prediction, n = 100,000) is run separately by
-## benchmark_real_bign.R, since every method takes far longer there.
+## Four biomedical/clinical datasets from `biobench` (>= 0.3.0), retained
+## from a larger pre-specified panel (n >= 250, p >= 8, n <= 6000) to keep
+## the benchmark to a size appropriate for an Application Note:
+## heartfailure, crcmondaca, arthritis (NHANES 2007-2008) and the clinical
+## variables of metabric.
 
 col_mse <- function(truth, imp, cols) {
   if (!length(cols)) return(NA_real_)
@@ -146,23 +145,23 @@ run_dataset <- function(name, truth, prop = 0.3, seed = 1L, run_missforest = TRU
 ## ---- Dataset preparation ----
 datasets <- list(
   list(name = "heart_failure", data = prep_dataset(
-    biostatlab::heart_failure,
+    biobench::heartfailure,
     factor_cols = c("anaemia", "diabetes", "high_blood_pressure", "sex", "smoking", "DEATH_EVENT")
   ), seed = 24),
   list(name = "crc_mondaca2020", data = {
     cols_num <- c("Age_at_Metastases","Fraction_Genome_Altered","Mutation_Count","TMB_nonsynonymous","MSI_Score","time")
     cols_fac <- c("Sex","Stage_At_Diagnosis","Tumor_Location","Differentiation","Metastasis")
-    sub <- prep_dataset(biostatlab::crc_mondaca2020[, c(cols_num, cols_fac)], factor_cols = cols_fac)
+    sub <- prep_dataset(biobench::crcmondaca[, c(cols_num, cols_fac)], factor_cols = cols_fac)
     sub$Differentiation[sub$Differentiation == "Well differentiated"] <- "Moderately differentiated"
     sub$Differentiation <- factor(sub$Differentiation)
     sub
   }, seed = 26),
-  list(name = "arthritis", data = prep_dataset(biostatlab::arthritis[, setdiff(names(biostatlab::arthritis), "id")],
-                                                factor_cols = c("status","heart.attack.relative","gender","diabetes","alcohol","smoke","prehypertension","vegetarian","covered.health")), seed = 29),
+  list(name = "arthritis", data = prep_dataset(biobench::arthritis[, setdiff(names(biobench::arthritis), "seqn")],
+                                                factor_cols = c("status","heart_attack_relative","gender","diabetes","alcohol","smoke","prehypertension","vegetarian","covered_health")), seed = 29),
   list(name = "metabric_clinical", data = {
     cols_num <- c("age_at_diagnosis","tumor_size","lymph_nodes_examined_positive","mutation_count","nottingham_prognostic_index","overall_survival_months")
     cols_fac <- c("er_status","her2_status","pr_status","cellularity","type_of_breast_surgery")
-    prep_dataset(biostatlab::metabric[, c(cols_num, cols_fac)], factor_cols = cols_fac)
+    prep_dataset(biobench::metabric[, c(cols_num, cols_fac)], factor_cols = cols_fac)
   }, seed = 31)
 )
 
@@ -218,12 +217,11 @@ report <- c(
   "",
   "## Dataset selection",
   "",
-  "Four biomedical/clinical datasets from `biostatlab`, kept to a size",
-  "appropriate for an Application Note: `heart_failure`, `crc_mondaca2020`,",
-  "`arthritis` and `metabric_clinical`.",
+  "Four biomedical/clinical datasets from `biobench` (>= 0.3.0), kept to a",
+  "size appropriate for an Application Note: `heartfailure`, `crcmondaca`,",
+  "`arthritis` (NHANES 2007-2008) and the clinical variables of `metabric`.",
   "Empty strings in categorical columns are treated as missing before the",
-  "complete-case ground truth is formed. The real-data scaling point",
-  "(`diabetes_prediction`, n = 100,000) is in benchmark_real_bign.R.",
+  "complete-case ground truth is formed.",
   "",
   "## Figures",
   "",
