@@ -10,10 +10,10 @@ suppressPackageStartupMessages({
   library(missForest)
   library(missRanger)
   library(VIM)
+  library(biobench)
   library(missknn)
 })
 
-data_dir <- file.path("inst", "benchmark", "data")
 out_dir <- file.path("inst", "benchmark", "output")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -109,21 +109,25 @@ run_dataset <- function(name, truth, prop = 0.3, seed = 1L) {
 }
 
 ## ---- Dataset preparation ----
+## Data from biobench (>= 0.3.0): miceprotein, tcgaluad, geolung.
 ## mice_protein / tcga_luad: standard complete-case ground truth, then 30%
 ## MCAR imposed (same convention as the CIBM real-data panel).
-## geo_lung: top-100-variance probes already 0% missing as downloaded.
+## geo_lung: top-100-variance probes already 0% missing as downloaded;
+## identifiers and tumour/normal status are left out, and age at diagnosis
+## is treated as categorical, as in the original run.
 
-mp <- readRDS(file.path(data_dir, "mice_protein.rds"))
-mp_factor_cols <- c("Genotype", "Treatment", "Behavior", "class")
-mp <- prep_dataset(mp[, setdiff(names(mp), "MouseID")], factor_cols = mp_factor_cols)
+mp <- biobench::miceprotein
+mp_factor_cols <- c("genotype", "treatment", "behavior", "class")
+mp <- prep_dataset(mp[, setdiff(names(mp), "mouse_id")], factor_cols = mp_factor_cols)
 
-tl <- readRDS(file.path(data_dir, "tcga_luad.rds"))
-tl_factor_cols <- c("SEX", "RACE", "AJCC_PATHOLOGIC_TUMOR_STAGE", "OS_STATUS")
-tl <- prep_dataset(tl[, setdiff(names(tl), "sampleId")], factor_cols = tl_factor_cols)
+tl <- biobench::tcgaluad
+tl_factor_cols <- c("sex", "race", "stage", "status")
+tl <- prep_dataset(tl[, setdiff(names(tl), "sample_id")], factor_cols = tl_factor_cols)
 
-gl <- readRDS(file.path(data_dir, "geo_lung.rds"))
-gl_factor_cols <- names(gl)[vapply(gl, is.factor, logical(1))]
-gl <- prep_dataset(gl[, setdiff(names(gl), "sampleId")], factor_cols = gl_factor_cols)
+gl <- biobench::geolung
+gl <- gl[, setdiff(names(gl), c("sample_id", "patient_id", "tissue"))]
+gl_factor_cols <- c("sex", "age", "smoking", "stage")
+gl <- prep_dataset(gl, factor_cols = gl_factor_cols)
 
 datasets <- list(
   list(name = "mice_protein", data = mp, seed = 41),
@@ -175,9 +179,8 @@ report <- c(
   "",
   "## Dataset selection",
   "",
-  "Three datasets sourced from genomics/proteomics/microarray repositories",
-  "(not the `biostatlab` clinical panel used in the CIBM submission), to",
-  "match a Bioinformatics-journal audience:",
+  "Three datasets sourced from genomics/proteomics/microarray repositories,",
+  "loaded from `biobench` (>= 0.3.0):",
   "",
   "- `mice_protein`: UCI Mice Protein Expression (protein/phosphoprotein",
   "  assay levels in mouse cortex; real assay-dropout missingness).",
@@ -185,7 +188,7 @@ report <- c(
   "  summary panel (age, stage, grade, mutation burden, survival), via",
   "  cBioPortal.",
   "- `geo_lung`: GSE10072 lung cancer microarray (Affymetrix HG-U133A),",
-  "  top-100-variance probes + phenotype (cancer/normal, sex, smoking).",
+  "  top-100-variance probes + phenotype (sex, age, smoking, stage).",
   "",
   "## Figures",
   "",

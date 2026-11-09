@@ -8,9 +8,8 @@ ground truth for each dataset.
 
 ## Dataset selection
 
-Three datasets sourced from genomics/proteomics/microarray repositories
-(not the `biostatlab` clinical panel used in the CIBM submission), to
-match a Bioinformatics-journal audience:
+Three datasets sourced from genomics/proteomics/microarray repositories,
+loaded from `biobench` (>= 0.3.0):
 
 - `mice_protein`: UCI Mice Protein Expression (protein/phosphoprotein
   assay levels in mouse cortex; real assay-dropout missingness).
@@ -18,7 +17,7 @@ match a Bioinformatics-journal audience:
   summary panel (age, stage, grade, mutation burden, survival), via
   cBioPortal.
 - `geo_lung`: GSE10072 lung cancer microarray (Affymetrix HG-U133A),
-  top-100-variance probes + phenotype (cancer/normal, sex, smoking).
+  top-100-variance probes + phenotype (sex, age, smoking, stage).
 
 ## Figures
 
