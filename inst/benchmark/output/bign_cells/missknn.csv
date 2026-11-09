@@ -1,2 +1,0 @@
-"dataset","method","n","p","runtime_sec","nrmse","pfc"
-"diabetes_prediction","missknn",1e+05,9,12.261,0.4212852289,0.249900311
