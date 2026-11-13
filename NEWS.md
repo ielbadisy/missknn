@@ -1,3 +1,7 @@
+# missknn 1.2.1
+
+* Internal call `basetable::as_basetable()` replaced by `basetable::asbasetable()` (the old name is deprecated in basetable 1.4.5); the minimum basetable version is now 1.4.5. No change to missknn's own API.
+
 # missknn 1.2.0
 
 ## Breaking changes

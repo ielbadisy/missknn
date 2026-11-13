@@ -33,7 +33,7 @@ remotes::install_github("ielbadisy/missknn")
   methods are removed; pool analyses with a dedicated package such as
   `mimar` (`mimar::pool_lm()`).
 - `data.table` is no longer a dependency: tabular handling uses
-  `basetable` (\>= 1.4.2) and outputs are plain data frames. Only `NA`
+  `basetable` (\>= 1.4.5) and outputs are plain data frames. Only `NA`
   cells are imputed (blank strings stay a valid category) and ordered
   factors are restored as ordered factors.
 - The `"tuning"` attribute now reports the number of `missing` values
@@ -233,6 +233,9 @@ imps[[2]]
 #> 8 8.1 8.3 y
 fits <- lapply(imps, function(d) lm(a ~ b, data = d))
 mimar::pool_lm(fits)
+#> Warning in mimar::pool_lm(fits): 'mimar::pool_lm' is deprecated.
+#> Use 'poollm' instead.
+#> See help("Deprecated")
 #> Pooled linear model
 #> Pooled across m = 5 imputations (Rubin's rules)
 #> 
@@ -298,7 +301,7 @@ citation("missknn")
 #> To cite missknn in publications, use:
 #> 
 #>   El Badisy I (2026). _missknn: Fast Masked K-Nearest Neighbor
-#>   Imputation_. R package version 1.2.0,
+#>   Imputation_. R package version 1.2.1,
 #>   <https://CRAN.R-project.org/package=missknn>.
 #> 
 #> A BibTeX entry for LaTeX users is
@@ -307,7 +310,7 @@ citation("missknn")
 #>     title = {missknn: Fast Masked K-Nearest Neighbor Imputation},
 #>     author = {Imad {El Badisy}},
 #>     year = {2026},
-#>     note = {R package version 1.2.0},
+#>     note = {R package version 1.2.1},
 #>     url = {https://CRAN.R-project.org/package=missknn},
 #>   }
 ```
