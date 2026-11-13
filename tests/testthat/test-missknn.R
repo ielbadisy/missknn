@@ -108,3 +108,25 @@ test_that("blank strings are a category, not missing", {
   expect_identical(out$s[c(1, 2, 4, 5, 6)], d$s[c(1, 2, 4, 5, 6)])
   expect_identical(out$s_missing, c(0L, 0L, 1L, 0L, 0L, 0L))
 })
+
+test_that("numeric_estimator = 'mean' is respected by tuning", {
+  set.seed(1)
+  n <- 300
+  x <- rnorm(n)
+  y <- 2 * x + rnorm(n, sd = 0.3)
+  y[sample(n, 60)] <- NA
+  tu <- attr(missknn(data.frame(y, x), numeric_estimator = "mean"), "tuning")
+  expect_true(all(tu$estimator == "mean"))
+})
+
+test_that("multiple imputation bootstraps the donors (proper MI)", {
+  # With k = 1 and fixed donors every imputation would copy the same nearest
+  # donor; the approximate Bayesian bootstrap makes the donor pool vary.
+  set.seed(2)
+  d <- data.frame(a = c(rnorm(12), NA, NA, NA), b = rnorm(15))
+  imps <- missknn(d, k = 1, m = 10, seed = 3, numeric_estimator = "mean",
+                  parallel_cores = 1L)
+  vals <- vapply(imps, function(x) x$a[13], numeric(1))
+  expect_gt(length(unique(vals)), 1L)
+  expect_true(all(vals %in% d$a[1:12]))
+})

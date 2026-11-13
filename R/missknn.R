@@ -63,13 +63,18 @@
 #' indicator of inequality for categorical variables.
 #'
 #' Single imputation uses a distance-weighted estimator from the `k` nearest
-#' donors. Multiple imputation samples a donor from the same `k` nearest
-#' donors using normalized inverse-distance probabilities.
+#' donors. Multiple imputation is made proper with an approximate Bayesian
+#' bootstrap (Rubin and Schenker, 1986): for each imputation, the donor pool
+#' of each variable is first resampled with replacement from its observed
+#' cases, and the neighbors, the local fit and the random donor draw (or
+#' residual draw for the local regression) all use that resample. The
+#' between-imputation variance therefore reflects uncertainty about the donor
+#' distribution, not only the random choice among fixed neighbors.
 #'
 #' `missknn()` is an imputer only: it returns completed data. Analysis and
 #' pooling of multiply imputed data (fitting a model on each completed data
 #' set and combining the fits with Rubin's rules) are left to dedicated
-#' packages such as `mimar` (for example `mimar::pool_lm()` on a list of
+#' packages such as `mimar` (for example `mimar::poollm()` on a list of
 #' `lm()` fits). Tabular handling (input coercion, column classes, type
 #' restoration) uses the `basetable` package. Only `NA` cells are imputed.
 #'
@@ -126,6 +131,9 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
   run_one <- function(r) {
     # dt is a basetable (a data.frame), so copy-on-modify keeps it intact across runs.
     working <- dt
+    if (m > 1L) {
+      meta <- missknn_boot_meta(dt, meta)
+    }
     for (iter in seq_len(max_iter)) {
       working <- missknn_single_pass(working, meta, stochastic = m > 1L)
     }

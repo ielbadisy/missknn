@@ -895,7 +895,8 @@ static NumericTuneResult missknn_tune_numeric_one_column(
     int target_col,
     const std::vector<int>& train_idx,
     const std::vector<int>& hold_idx,
-    const std::vector<int>& k_grid) {
+    const std::vector<int>& k_grid,
+    bool allow_regression) {
   const int target_pos = numeric_pos[target_col - 1] - 1;
   const int n_train = static_cast<int>(train_idx.size());
   const int n_hold = static_cast<int>(hold_idx.size());
@@ -1014,7 +1015,8 @@ static NumericTuneResult missknn_tune_numeric_one_column(
     std::min(n_train, 300)
   };
 
-  for (size_t ci = 0; ci < 2; ++ci) {
+  // numeric_estimator = "mean" rules the regression candidates out entirely.
+  for (size_t ci = 0; allow_regression && ci < 2; ++ci) {
     const int reg_k = reg_k_candidates[ci];
     double sse = 0.0;
     int cnt = 0;
@@ -1072,6 +1074,7 @@ struct TuneNumericWorker : public Worker {
   const std::vector<std::vector<int>>& train_list;
   const std::vector<std::vector<int>>& hold_list;
   const std::vector<std::vector<int>>& k_grid_list;
+  const bool allow_regression;
   std::vector<int>& out_k;
   std::vector<int>& out_est;
   std::vector<int>& out_global;
@@ -1089,19 +1092,21 @@ struct TuneNumericWorker : public Worker {
                      const std::vector<std::vector<int>>& train_list_,
                      const std::vector<std::vector<int>>& hold_list_,
                      const std::vector<std::vector<int>>& k_grid_list_,
+                     const bool allow_regression_,
                      std::vector<int>& out_k_,
                      std::vector<int>& out_est_,
                      std::vector<int>& out_global_)
     : numeric_scaled(numeric_scaled_), numeric_raw(numeric_raw_), categorical_codes(categorical_codes_),
       col_types(col_types_), numeric_pos(numeric_pos_), categorical_pos(categorical_pos_), weights(weights_),
       epsilon(epsilon_), ridge(ridge_), target_cols(target_cols_), train_list(train_list_),
-      hold_list(hold_list_), k_grid_list(k_grid_list_), out_k(out_k_), out_est(out_est_), out_global(out_global_) {}
+      hold_list(hold_list_), k_grid_list(k_grid_list_), allow_regression(allow_regression_), out_k(out_k_), out_est(out_est_), out_global(out_global_) {}
 
   void operator()(std::size_t begin, std::size_t end) {
     for (std::size_t t = begin; t < end; ++t) {
       const NumericTuneResult res = missknn_tune_numeric_one_column(
           numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos,
-          weights, epsilon, ridge, target_cols[t], train_list[t], hold_list[t], k_grid_list[t]);
+          weights, epsilon, ridge, target_cols[t], train_list[t], hold_list[t], k_grid_list[t],
+          allow_regression);
       out_k[t] = res.k;
       out_est[t] = res.estimator_code;
       out_global[t] = res.is_global ? 1 : 0;
@@ -1124,6 +1129,7 @@ List cpp_missknn_tune_numeric(
     const List& train_list,
     const List& hold_list,
     const List& k_grid_list,
+    const bool allow_regression = true,
     const bool display_progress = false,
     Rcpp::Nullable<Rcpp::Function> progress_cb = R_NilValue) {
   const int ntar = target_cols.size();
@@ -1148,7 +1154,8 @@ List cpp_missknn_tune_numeric(
 
   TuneNumericWorker worker(numeric_scaled, numeric_raw, categorical_codes, col_types_v,
                             numeric_pos_v, categorical_pos_v, weights_v, epsilon, ridge,
-                            target_cols_v, train_v, hold_v, k_grid_v, out_k, out_est, out_global);
+                            target_cols_v, train_v, hold_v, k_grid_v, allow_regression,
+                            out_k, out_est, out_global);
   missknn_run_with_optional_progress(worker, ntar, display_progress, progress_cb);
 
   IntegerVector best_k(ntar);
