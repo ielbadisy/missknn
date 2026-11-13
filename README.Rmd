@@ -40,7 +40,7 @@ remotes::install_github("ielbadisy/missknn")
   `m = 1`, a list of `m` completed data frames (class `c("mimar_mi", "list")`) when `m >= 2`.
 - `complete()`, the `missknn` object class and its `print()`/`summary()` methods are removed;
   pool analyses with a dedicated package such as `mimar` (`mimar::pool_lm()`).
-- `data.table` is no longer a dependency: tabular handling uses `basetable` (>= 1.4.2) and
+- `data.table` is no longer a dependency: tabular handling uses `basetable` (>= 1.4.5) and
   outputs are plain data frames. Only `NA` cells are imputed (blank strings stay a valid
   category) and ordered factors are restored as ordered factors.
 - The `"tuning"` attribute now reports the number of `missing` values per variable.

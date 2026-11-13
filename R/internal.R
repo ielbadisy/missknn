@@ -62,7 +62,7 @@ missknn_validate_input <- function(data) {
     stop("`data` must be a data.frame or matrix.", call. = FALSE)
   }
 
-  basetable::as_basetable(data)
+  basetable::asbasetable(data)
 }
 
 missknn_detect_types <- function(dt) {
