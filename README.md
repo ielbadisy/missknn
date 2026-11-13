@@ -31,7 +31,7 @@ remotes::install_github("ielbadisy/missknn")
   frames (class `c("mimar_mi", "list")`) when `m >= 2`.
 - `complete()`, the `missknn` object class and its `print()`/`summary()`
   methods are removed; pool analyses with a dedicated package such as
-  `mimar` (`mimar::pool_lm()`).
+  `mimar` (`mimar::poollm()`).
 - `data.table` is no longer a dependency: tabular handling uses
   `basetable` (\>= 1.4.5) and outputs are plain data frames. Only `NA`
   cells are imputed (blank strings stay a valid category) and ordered
@@ -176,7 +176,7 @@ Returns completed data directly:
 
 `missknn` is an imputer only. Fit the analysis model on each completed
 data set and pool the fits with Rubin’s rules using a dedicated package
-such as `mimar` (`mimar::pool_lm()`).
+such as `mimar` (`mimar::poollm()`).
 
 ## Example
 
@@ -232,18 +232,13 @@ imps[[2]]
 #> 7 8.1 7.9 y
 #> 8 8.1 8.3 y
 fits <- lapply(imps, function(d) lm(a ~ b, data = d))
-mimar::pool_lm(fits)
-#> Warning in mimar::pool_lm(fits): 'mimar::pool_lm' is deprecated.
-#> Use 'poollm' instead.
-#> See help("Deprecated")
+mimar::poollm(fits)
 #> Pooled linear model
 #> Pooled across m = 5 imputations (Rubin's rules)
 #> 
-#>             Estimate Std. Error    df t value Pr(>|t|)  
-#> (Intercept)  -0.2727     1.6125 2.123  -0.169   0.8805  
-#> b             0.9660     0.2412 3.110   4.004   0.0261 *
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#>             Estimate Std. Error    df t value Pr(>|t|)
+#> (Intercept)  0.08624    1.68020 2.489   0.051    0.963
+#> b            0.86608    0.33821 1.728   2.561    0.144
 ```
 
 ## Execution time vs. sample size
@@ -301,7 +296,7 @@ citation("missknn")
 #> To cite missknn in publications, use:
 #> 
 #>   El Badisy I (2026). _missknn: Fast Masked K-Nearest Neighbor
-#>   Imputation_. R package version 1.2.1,
+#>   Imputation_. R package version 1.2.2,
 #>   <https://CRAN.R-project.org/package=missknn>.
 #> 
 #> A BibTeX entry for LaTeX users is
@@ -310,7 +305,7 @@ citation("missknn")
 #>     title = {missknn: Fast Masked K-Nearest Neighbor Imputation},
 #>     author = {Imad {El Badisy}},
 #>     year = {2026},
-#>     note = {R package version 1.2.1},
+#>     note = {R package version 1.2.2},
 #>     url = {https://CRAN.R-project.org/package=missknn},
 #>   }
 ```

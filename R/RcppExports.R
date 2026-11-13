@@ -9,8 +9,8 @@ cpp_missknn_impute_categorical_column <- function(numeric_scaled, categorical_co
     .Call(`_missknn_cpp_missknn_impute_categorical_column`, numeric_scaled, categorical_codes, col_types, numeric_pos, categorical_pos, donor_rows, receiver_rows, target_col, weights, k, aggregation, stochastic, epsilon, display_progress, progress_cb)
 }
 
-cpp_missknn_tune_numeric <- function(numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, ridge, target_cols, train_list, hold_list, k_grid_list, display_progress = FALSE, progress_cb = NULL) {
-    .Call(`_missknn_cpp_missknn_tune_numeric`, numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, ridge, target_cols, train_list, hold_list, k_grid_list, display_progress, progress_cb)
+cpp_missknn_tune_numeric <- function(numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, ridge, target_cols, train_list, hold_list, k_grid_list, allow_regression = TRUE, display_progress = FALSE, progress_cb = NULL) {
+    .Call(`_missknn_cpp_missknn_tune_numeric`, numeric_scaled, numeric_raw, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, ridge, target_cols, train_list, hold_list, k_grid_list, allow_regression, display_progress, progress_cb)
 }
 
 cpp_missknn_tune_categorical <- function(numeric_scaled, categorical_codes, col_types, numeric_pos, categorical_pos, weights, epsilon, target_cols, train_list, hold_list, k_grid_list, display_progress = FALSE, progress_cb = NULL) {

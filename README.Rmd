@@ -39,7 +39,7 @@ remotes::install_github("ielbadisy/missknn")
 - `missknn()` is now an imputer only and returns completed data directly: a `data.frame` when
   `m = 1`, a list of `m` completed data frames (class `c("mimar_mi", "list")`) when `m >= 2`.
 - `complete()`, the `missknn` object class and its `print()`/`summary()` methods are removed;
-  pool analyses with a dedicated package such as `mimar` (`mimar::pool_lm()`).
+  pool analyses with a dedicated package such as `mimar` (`mimar::poollm()`).
 - `data.table` is no longer a dependency: tabular handling uses `basetable` (>= 1.4.5) and
   outputs are plain data frames. Only `NA` cells are imputed (blank strings stay a valid
   category) and ordered factors are restored as ordered factors.
@@ -165,7 +165,7 @@ Returns completed data directly:
 - `m >= 2`: a list of `m` completed data frames with class `c("mimar_mi", "list")`.
 
 `missknn` is an imputer only. Fit the analysis model on each completed data set and pool the
-fits with Rubin's rules using a dedicated package such as `mimar` (`mimar::pool_lm()`).
+fits with Rubin's rules using a dedicated package such as `mimar` (`mimar::poollm()`).
 
 ## Example
 
@@ -197,7 +197,7 @@ imps <- missknn(x, k = 2, m = 5, seed = 1, parallel_cores = 1L)
 class(imps)
 imps[[2]]
 fits <- lapply(imps, function(d) lm(a ~ b, data = d))
-mimar::pool_lm(fits)
+mimar::poollm(fits)
 ```
 
 ## Execution time vs. sample size

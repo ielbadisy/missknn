@@ -327,6 +327,11 @@ missknn_single_pass <- function(dt, meta, stochastic = FALSE) {
       next
     }
     donors <- which(!is.na(working$original[[target]]))
+    if (!is.null(meta$boot_donors)) {
+      # Multiple imputation: donors come from this imputation's approximate
+      # Bayesian bootstrap of the observed cases (see missknn_boot_donors()).
+      donors <- meta$boot_donors[[target]]
+    }
     if (!length(donors)) {
       fill <- missknn_global_fill(target, meta)
       for (i in receivers) {
@@ -562,6 +567,7 @@ missknn_tune_all <- function(dt, meta) {
       meta$numeric$scaled_matrix, meta$numeric$raw_matrix, meta$categorical$matrix,
       meta$type_codes, meta$numeric_pos, meta$categorical_pos, meta$weights,
       meta$epsilon, meta$ridge, num_targets, num_train, num_hold, num_kgrid,
+      identical(meta$numeric_estimator, "regression"),
       isTRUE(meta$progress), missknn_progress_cb(pb_id)
     )
     missknn_progress_done(pb_id)
@@ -584,6 +590,22 @@ missknn_tune_all <- function(dt, meta) {
   }
 
   list(k_per_col = as.integer(k_per_col), estimator_per_col = estimator_per_col, is_global_col = is_global_col)
+}
+
+# Approximate Bayesian bootstrap (Rubin and Schenker 1986) for proper
+# multiple imputation: for each column, a with-replacement resample of its
+# observed rows. Each imputation draws its donors from its own resample, so
+# the between-imputation variance carries the uncertainty about the donor
+# distribution (and hence the local mean or regression fit), not only the
+# donor draw. The tuned k and estimator are kept fixed across imputations:
+# re-tuning on each resample inflated the intervals and the bias in
+# simulation.
+missknn_boot_donors <- function(dt) {
+  lapply(dt, function(x) {
+    d <- which(!is.na(x))
+    if (length(d) < 2L) return(d)
+    sort(d[sample.int(length(d), length(d), replace = TRUE)])
+  })
 }
 
 missknn_make_meta <- function(dt, k, scale, weights, add_indicator, seed,
@@ -649,4 +671,11 @@ missknn_finalize <- function(completed, original, meta, add_indicator) {
     }
   }
   as.data.frame(out)
+}
+
+# Per-imputation metadata for multiple imputation: attach that imputation's
+# bootstrap donors.
+missknn_boot_meta <- function(dt, meta) {
+  meta$boot_donors <- missknn_boot_donors(dt)
+  meta
 }

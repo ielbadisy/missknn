@@ -49,7 +49,10 @@ get a distance-weighted majority vote.
 ## Multiple imputation
 
 Setting `m > 1` draws `m` completed datasets by sampling (rather than averaging) from each
-receiver's nearest donors, using the same distance model throughout:
+receiver's nearest donors, using the same distance model throughout. Each imputation first
+resamples the observed donors with replacement (an approximate Bayesian bootstrap), so the
+spread between imputations reflects the uncertainty about the donors and pooled intervals are
+proper:
 
 ```{r}
 imps <- missknn(x, k = 2, m = 5, seed = 1, parallel_cores = 1L)
@@ -59,11 +62,11 @@ length(imps)
 
 The result is a list of `m` completed data frames (class `mimar_mi`). `missknn` is an imputer
 only: fit the analysis model on each completed data set, then combine the fits with Rubin's
-rules, for example with `mimar::pool_lm()`:
+rules, for example with `mimar::poollm()`:
 
 ```{r, eval = FALSE}
 fits <- lapply(imps, function(d) lm(a ~ b + g, data = d))
-mimar::pool_lm(fits)
+mimar::poollm(fits)
 ```
 
 ## Per-column adaptive tuning
