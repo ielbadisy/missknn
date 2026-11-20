@@ -1,3 +1,7 @@
+# missknn 1.2.3
+
+* Bug fix: multiple imputation (`m > 1`) with a `seed` now gives the same imputations whatever `parallel_cores` is, and repeated parallel runs agree. Each imputation is now seeded from a per-imputation seed drawn in the parent session, instead of forked workers inheriting a shared stream. Because a forked worker cannot reproduce the serial stream, multiple imputation results also change for `parallel_cores = 1`; single imputation (`m = 1`) results do not. The caller's random stream after the call no longer depends on `parallel_cores`. No API change.
+
 # missknn 1.2.2
 
 * Multiple imputation (`m >= 2`) is now proper: each imputation draws its donors from an approximate Bayesian bootstrap (Rubin and Schenker 1986) of each variable's observed cases before the neighbor search and donor draw. Previously only the donor draw varied, so pooled intervals undercovered (83.5% in a 200-replicate simulation with a MAR covariate; 89.5% now, the rest due to kNN bias under that MAR mechanism, with Rubin's variance now close to the empirical variance). Multiple imputation results change; single imputation results do not. No API change.

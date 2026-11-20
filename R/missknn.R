@@ -13,6 +13,9 @@
 #' @param add_indicator Logical; if `TRUE`, missingness indicator columns are
 #'   appended to the completed output.
 #' @param seed Optional integer seed for reproducible multiple imputation.
+#'   With `m > 1`, one seed per imputation is drawn from it (or from the current
+#'   random stream when `seed = NULL`), so the imputations are identical whatever
+#'   `parallel_cores` is.
 #' @param weights Character string. Currently `"distance"` uses inverse-distance
 #'   aggregation and `"uniform"` uses equal weights.
 #' @param numeric_estimator Character string. `"regression"` (default) fits a
@@ -128,10 +131,18 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
                              seed = seed, numeric_estimator = numeric_estimator, ridge = ridge,
                              donor_cap = donor_cap, progress = use_progress)
 
+  # One seed per imputation, drawn in the parent: a forked worker cannot know where the
+  # serial stream would stand after the earlier imputations, so each run reseeds itself
+  # and the result no longer depends on parallel_cores.
+  if (m > 1L) {
+    seeds <- sample.int(.Machine$integer.max, m)
+    parent_seed <- get(".Random.seed", envir = .GlobalEnv)
+  }
   run_one <- function(r) {
     # dt is a basetable (a data.frame), so copy-on-modify keeps it intact across runs.
     working <- dt
     if (m > 1L) {
+      set.seed(seeds[r])
       meta <- missknn_boot_meta(dt, meta)
     }
     for (iter in seq_len(max_iter)) {
@@ -145,6 +156,7 @@ missknn <- function(data, k = 5L, m = 1L, scale = TRUE, add_indicator = FALSE,
   } else {
     completed_sets <- lapply(seq_len(m), run_one)
   }
+  if (m > 1L) assign(".Random.seed", parent_seed, envir = .GlobalEnv)
 
   tuning <- data.frame(
     variable = names(dt),

@@ -130,3 +130,21 @@ test_that("multiple imputation bootstraps the donors (proper MI)", {
   expect_gt(length(unique(vals)), 1L)
   expect_true(all(vals %in% d$a[1:12]))
 })
+
+test_that("multiple imputation with a seed does not depend on parallel_cores", {
+  skip_on_os("windows")
+  set.seed(5)
+  x <- data.frame(a = rnorm(80), b = rnorm(80), g = factor(sample(c("u", "v"), 80, TRUE)))
+  x$b <- x$b + x$a
+  x$a[sample(80, 15)] <- NA; x$b[sample(80, 15)] <- NA; x$g[sample(80, 10)] <- NA
+  run <- function(pc) unclass(missknn(x, k = 3, m = 4, seed = 1, parallel_cores = pc))
+  r1 <- run(1L)
+  expect_identical(r1, run(1L))
+  expect_identical(r1, run(2L))
+  expect_identical(r1, run(2L))
+  expect_false(identical(r1[[1]], r1[[2]]))
+  set.seed(9); a <- runif(1); s1 <- unclass(missknn(x, k = 3, m = 3, parallel_cores = 1L)); b1 <- runif(1)
+  set.seed(9); a <- runif(1); s2 <- unclass(missknn(x, k = 3, m = 3, parallel_cores = 2L)); b2 <- runif(1)
+  expect_identical(s1, s2)
+  expect_identical(b1, b2)
+})
