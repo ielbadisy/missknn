@@ -34,7 +34,10 @@ computing distances.}
 \item{add_indicator}{Logical; if `TRUE`, missingness indicator columns are
 appended to the completed output.}
 
-\item{seed}{Optional integer seed for reproducible multiple imputation.}
+\item{seed}{Optional integer seed for reproducible multiple imputation.
+With `m > 1`, one seed per imputation is drawn from it (or from the current
+random stream when `seed = NULL`), so the imputations are identical whatever
+`parallel_cores` is.}
 
 \item{weights}{Character string. Currently `"distance"` uses inverse-distance
 aggregation and `"uniform"` uses equal weights.}
